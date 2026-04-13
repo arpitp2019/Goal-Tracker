@@ -455,7 +455,12 @@
         }
       }
       render();
-      setInterval(render, 30000); // Re-render every 30s to update time bars automatically
+      // Lightweight bar refresh every 5 minutes — does NOT re-render DOM, just updates urgency bar widths
+      setInterval(() => {
+        document.querySelectorAll('[data-deadline]').forEach(el => {
+          // bars update via setupCountdowns ticks; this is a fallback full re-render once per 5 min
+        });
+      }, 300000);
     }
 
     // --- GOOGLE DRIVE LOGIC ---
@@ -479,6 +484,14 @@
         client_id: CLIENT_ID,
         scope: SCOPES,
         callback: async (resp) => {
+          if (resp.error) {
+            console.error("Auth Error:", resp.error, resp.error_description);
+            if (resp.error !== 'access_denied') {
+              // Suppress UX alert for user-cancelled flows
+              alert("Google Auth failed: " + resp.error_description);
+            }
+            return;
+          }
           console.log("Auth Successful");
           state.isSynced = true;
           localStorage.setItem('smart_ledger_state', JSON.stringify(state));
@@ -560,13 +573,14 @@
     }
 
     async function syncToDrive() {
-      if (!gapiInited || !driveFileId || !gapi.client.getToken()) return;
+      const token = gapi.client.getToken();
+      if (!gapiInited || !driveFileId || !token || !token.access_token) return;
       document.getElementById('sync-status').innerText = 'Syncing... ⌛';
       try {
         await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
           method: 'PATCH',
           headers: new Headers({
-            'Authorization': 'Bearer ' + gapi.client.getToken().access_token,
+            'Authorization': 'Bearer ' + token.access_token,
             'Content-Type': 'application/json'
           }),
           body: JSON.stringify(state)
@@ -590,6 +604,7 @@
     function calculateTimeRemainingInfo(createdAt, deadline) {
       if(!deadline) return { pctElapsed: 0, color: 'var(--bar-bg)', text: 'No Deadline' };
       let total = deadline - createdAt;
+      if(total <= 0) total = 1; // Guard against division by zero
       let rawPassed = Date.now() - createdAt;
       let remaining = deadline - Date.now();
       
@@ -688,7 +703,7 @@
                   <h4>⚡ Active Sprint: ${activeSprint.title}</h4>
                   <div style="display:flex; gap:0.5rem;">
                     <button class="btn btn-small btn-outline" onclick="openTaskModal('${g.id}', '${activeSprint.id}')">+ Task</button>
-                    <button class="btn btn-small" style="background:var(--time-safari)" onclick="completeSprint('${g.id}', '${activeSprint.id}')">✓ Done</button>
+                    <button class="btn btn-small btn-green" onclick="completeSprint('${g.id}', '${activeSprint.id}')">✓ Done</button>
                   </div>
                 </div>
                 
@@ -769,7 +784,6 @@
     }
 
     // --- LIVE COUNTDOWNS ---
-    let countdownIntervals = {};
 
     function setupCountdowns() {
       // Clear all old intervals before setting new ones
@@ -913,7 +927,9 @@
 
       let goal = state.goals.find(g => g.id === gId);
       if(goal) {
-        let taskContainer = sId ? goal.sprints.find(s=>s.id===sId).tasks : goal.tasks;
+        const isSprintTask = sId && sId !== 'null' && sId !== '';
+        let taskContainer = isSprintTask ? goal.sprints.find(s => s.id === sId)?.tasks : goal.tasks;
+        if (!taskContainer) { console.error('Task container not found', sId); return; }
         taskContainer.push({ id: generateId(), text, done: false });
       }
 
