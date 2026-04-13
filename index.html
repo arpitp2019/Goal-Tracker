@@ -285,11 +285,16 @@
 
     // --- GOOGLE DRIVE LOGIC ---
     function gapiLoaded() {
+      console.log("GAPI Script Loaded");
       gapi.load('client', async () => {
         try {
           await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
           gapiInited = true;
-        } catch (e) { console.error('GAPI Init error', e); }
+          console.log("GAPI Initialized Successfully");
+        } catch (e) { 
+          console.error('GAPI Init error', e); 
+          alert("Error: Google Drive API Key is invalid or blocked. Check console for details.");
+        }
       });
     }
 
@@ -710,7 +715,10 @@
           <div class="card vault-card">
             <div class="card-header">
               <div class="card-title">${g.title}</div>
-              <span class="card-meta">Decimated on ${dateStr}</span>
+              <div style="display:flex; gap:0.5rem; align-items:center;">
+                <span class="card-meta">Decimated on ${dateStr}</span>
+                <button title="Delete Permanent" style="background:none; border:none; color:var(--text-muted); cursor:pointer;" onclick="deleteArchivedGoal('${g.id}')">🗑️</button>
+              </div>
             </div>
             <div class="vault-stats">
               <span><strong>Tasks Crushed:</strong> ${g.tasksCrushed || 0}</span>
@@ -719,6 +727,13 @@
           </div>
         `;
       }).join('');
+    }
+
+    function deleteArchivedGoal(gId) {
+      if(confirm('Are you certain? This will permanently erase this achievement from your history.')) {
+        state.archivedGoals = state.archivedGoals.filter(g => g.id !== gId);
+        saveLocal();
+      }
     }
 
     window.onload = init;
