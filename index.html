@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMART Goal Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0f172a;
+      --bg-card: #1e293b;
+      --bg-header: rgba(15, 23, 42, 0.9);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --bar-bg: #334155;
+      
+      --color-progress: #10b981;
+      --time-safari: #10b981; /* Green/Safe */
+      --time-warning: #eab308; /* Yellow/Warning */
+      --time-critical: #ef4444; /* Red/Critical */
+      
+      --font-body: 'Inter', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Minimalist Header */
+    header {
+      background: var(--bg-header);
+      backdrop-filter: blur(12px);
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.5px; }
+    h2 { font-size: 1.25rem; font-weight: 500; margin-bottom: 1rem; }
+    h3 { font-size: 1.1rem; font-weight: 500; }
+
+    /* Buttons */
+    .btn {
+      background: var(--accent); color: white; border: none;
+      padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer;
+      font-family: var(--font-body); font-weight: 500;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:active { transform: scale(0.98); }
+    .btn-outline {
+      background: transparent; border: 1px solid var(--text-muted); color: var(--text-main);
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.05); }
+    .btn-small { padding: 0.3rem 0.6rem; font-size: 0.85rem; }
+
+    .drive-status { display: flex; align-items: center; gap: 1rem; }
+    .status-text { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* Main Container */
+    .container { padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; flex: 1; display:flex; flex-direction: column; gap: 2rem;}
+
+    /* Goal Cards */
+    .goal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(450px, 1fr)); gap: 1.5rem; }
+    @media(max-width: 600px) { .goal-grid { grid-template-columns: 1fr; } }
+    
+    .card {
+      background: var(--bg-card); border-radius: 12px; padding: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      display: flex; flex-direction: column; gap: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .card-title { font-weight: 600; font-size: 1.1rem; }
+    .card-meta { font-size: 0.8rem; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 0.2rem 0.5rem; border-radius: 4px; }
+
+    /* Dual Bars - Time Diminish Visualizer */
+    .dual-bars { display: flex; flex-direction: column; gap: 0.5rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.02);}
+    .bar-group { display: flex; flex-direction: column; gap: 0.25rem; }
+    .bar-label-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    
+    .bar-track { width: 100%; height: 8px; background: var(--bar-bg); border-radius: 4px; overflow: hidden; }
+    .bar-fill { height: 100%; transition: width 0.5s ease; border-radius: 4px; }
+    
+    .progress-fill { background: var(--color-progress); }
+    .time-fill { transition: width 1s linear, background-color 0.5s; }
+
+    /* Task List */
+    .task-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+    .task-item {
+      display: flex; align-items: center; gap: 0.75rem;
+      background: rgba(255,255,255,0.03); padding: 0.6rem 0.8rem; border-radius: 6px;
+    }
+    .task-item input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+    .task-text { font-size: 0.9rem; flex: 1; }
+    .task-done .task-text { text-decoration: line-through; color: var(--text-muted); }
+
+    /* Sprint Container */
+    .sprint-container {
+      border-left: 2px solid var(--accent); padding-left: 1rem; margin-top: 0.5rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      display: none; justify-content: center; align-items: center; z-index: 100;
+    }
+    .modal {
+      background: var(--bg-card); padding: 2rem; border-radius: 12px;
+      width: 100%; max-width: 450px; border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-header h2 { margin-bottom: 0; }
+    .close-btn { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+    .close-btn:hover { color: white; }
+    
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+    .form-group input, .form-group select {
+      width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1);
+      color: white; border-radius: 6px; font-family: var(--font-body);
+    }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent); }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem; }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 3rem; color: var(--text-muted); background: var(--bg-card); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1); }
+    
+    /* Vault */
+    .vault-card { border-left: 4px solid var(--time-safari); opacity: 0.9; }
+    .vault-stats { display: flex; gap: 1rem; margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted); background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 6px;}
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎯 SMART Goal Tracker</h1>
+    <div class="drive-status">
+      <span class="status-text" id="sync-status">Local Save</span>
+      <button id="btn-auth" class="btn btn-outline btn-small" onclick="handleAuthClick()">Connect Google Drive</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div style="display:flex; justify-content: space-between; align-items: center;">
+      <div style="display:flex; gap: 1rem; align-items: center;">
+        <h2 id="view-title">Active Dashboard</h2>
+        <button id="btn-toggle-view" class="btn btn-outline btn-small" onclick="toggleView()">Open Confidence Vault 🏆</button>
+      </div>
+      <button class="btn" id="btn-new-goal" onclick="openGoalModal()">+ Create New Goal</button>
+    </div>
+    
+    <div id="goals-container" class="goal-grid">
+      <!-- Goals Render Here -->
+    </div>
+    <div id="vault-container" class="goal-grid" style="display:none;">
+      <!-- Vault Render Here -->
+    </div>
+  </div>
+
+  <!-- New Goal Modal -->
+  <div id="goal-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Establish New Goal</h2>
+        <button class="close-btn" onclick="closeModals()">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Goal Definition (Specific)</label>
+        <input type="text" id="g-title" placeholder="e.g. Complete Q3 Report">
+      </div>
+      <div class="form-group">
+        <label>Time Horizon</label>
+        <select id="g-type" onchange="toggleFormLogic()">
+          <option value="short">Short Term (Days/Weeks) - Direct Tasks</option>
+          <option value="long">Long Term (Months+) - Requires Sprints</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Target Deadline (Timebound)</label>
+        <input type="datetime-local" id="g-deadline">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeModals()">Cancel</button>
+        <button class="btn" onclick="saveGoal()">Initialize Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tasks Modal (for Short Term or Sprint) -->
+  <div id="task-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Append Action Item</h2>
+        <button class="close-btn" onclick="closeModals()">&times;</button>
+      </div>
+      <input type="hidden" id="t-goal-id">
+      <input type="hidden" id="t-sprint-id">
+      <div class="form-group">
+        <label>Task Description (Actionable)</label>
+        <input type="text" id="t-text" placeholder="e.g. Gather data from analytics tool" onkeypress="if(event.key==='Enter') saveTask()">
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="saveTask()" style="width: 100%">Add Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sprint Modal (for Long Term Goals) -->
+  <div id="sprint-modal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Create Active Sprint</h2>
+        <button class="close-btn" onclick="closeModals()">&times;</button>
+      </div>
+      <input type="hidden" id="s-goal-id">
+      <div class="form-group">
+        <label>Sprint Focus</label>
+        <input type="text" id="s-title" placeholder="e.g. Foundation Layer (Weeks 1-2)">
+      </div>
+      <div class="form-group">
+        <label>Sprint Deadline</label>
+        <input type="datetime-local" id="s-deadline">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeModals()">Cancel</button>
+        <button class="btn" onclick="saveSprint()">Launch Sprint</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // --- APP CONFIG ---
+    const CLIENT_ID = '216540498622-2ccjhuedqhpkelaea8nv2suaicps07ov.apps.googleusercontent.com'; 
+    const API_KEY = 'AIzaSyDD8NYtI5kgrTEfaqX3Uiq6ovUBiXp83Dc';
+    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+    const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+
+    // --- STATE ---
+    let state = {
+      goals: [], archivedGoals: []
+    };
+    let currentView = 'active'; // 'active' or 'vault'
+    let driveFileId = null;
+    let tokenClient = null;
+    let gapiInited = false;
+    let autoSyncInt = null;
+
+    // --- INIT ---
+    function init() {
+      const saved = localStorage.getItem('smart_ledger_state');
+      // Detect old schema (from RPG version state) and nuke if necessary
+      if (saved) { 
+        let parsed = JSON.parse(saved);
+        if(parsed.player) {
+          console.log("Incompatible legacy save found. Purging.");
+          localStorage.removeItem('smart_ledger_state');
+        } else {
+          if(!parsed.archivedGoals) parsed.archivedGoals = [];
+          state = parsed; 
+        }
+      }
+      render();
+      setInterval(render, 30000); // Re-render every 30s to update time bars automatically
+    }
+
+    // --- GOOGLE DRIVE LOGIC ---
+    function gapiLoaded() {
+      gapi.load('client', async () => {
+        try {
+          await gapi.client.init({ apiKey: API_KEY, discoveryDocs: [DISCOVERY_DOC] });
+          gapiInited = true;
+        } catch (e) { console.error('GAPI Init error', e); }
+      });
+    }
+
+    function gisLoaded() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: async (resp) => {
+          if (resp.error) return;
+          document.getElementById('sync-status').innerText = 'Synced ☁️';
+          document.getElementById('sync-status').style.color = 'var(--text-main)';
+          document.getElementById('btn-auth').style.display = 'none';
+          await findOrCreateSaveFile();
+        }
+      });
+    }
+
+    function handleAuthClick() {
+      if (tokenClient === null) {
+        alert("Google API is still loading or failed to load. Please wait a moment and try again.");
+        return;
+      }
+      tokenClient.requestAccessToken({prompt: ''});
+    }
+
+    async function findOrCreateSaveFile() {
+      try {
+        let res = await gapi.client.drive.files.list({
+          spaces: 'appDataFolder', q: "name='smart_ledger_save.json'", fields: 'files(id)'
+        });
+        if (res.result.files && res.result.files.length > 0) {
+          driveFileId = res.result.files[0].id;
+          let fileRes = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
+          if (fileRes.body) {
+            let remoteState = JSON.parse(fileRes.body);
+            if(!remoteState.player) { // Confirm not old data
+              state = remoteState;
+              saveLocal();
+            }
+          }
+        } else {
+          let metadata = { name: 'smart_ledger_save.json', parents: ['appDataFolder'] };
+          let file = new Blob([JSON.stringify(state)], {type: 'application/json'});
+          let formData = new FormData();
+          formData.append('metadata', new Blob([JSON.stringify(metadata)], {type: 'application/json'}));
+          formData.append('file', file);
+          let fetchRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: new Headers({'Authorization': 'Bearer ' + gapi.client.getToken().access_token}),
+            body: formData
+          });
+          let json = await fetchRes.json();
+          driveFileId = json.id;
+        }
+      } catch (e) { console.error('Drive Load Error', e); }
+    }
+
+    async function syncToDrive() {
+      if (!gapiInited || !driveFileId || !gapi.client.getToken()) return;
+      document.getElementById('sync-status').innerText = 'Syncing... ⌛';
+      try {
+        await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
+          method: 'PATCH',
+          headers: new Headers({
+            'Authorization': 'Bearer ' + gapi.client.getToken().access_token,
+            'Content-Type': 'application/json'
+          }),
+          body: JSON.stringify(state)
+        });
+        document.getElementById('sync-status').innerText = 'Synced ☁️';
+      } catch(e) { document.getElementById('sync-status').innerText = 'Sync Error ⚠️'; }
+    }
+
+    function saveLocal() {
+      localStorage.setItem('smart_ledger_state', JSON.stringify(state));
+      render();
+      if(driveFileId) {
+        clearTimeout(autoSyncInt);
+        autoSyncInt = setTimeout(syncToDrive, 2000); 
+      }
+    }
+
+    // --- UTILS ---
+    function generateId() { return Math.random().toString(36).substr(2, 9); }
+    
+    function calculateTimeRemainingInfo(createdAt, deadline) {
+      if(!deadline) return { pctLeft: 100, color: 'var(--bar-bg)', text: 'No Deadline' };
+      let total = deadline - createdAt;
+      let rawPassed = Date.now() - createdAt;
+      let remaining = deadline - Date.now();
+      
+      // Determine the quantized "tick" step based on urgency
+      let stepMs = 3600000; // <= 3 days: 1 hour tick
+      if (remaining > 7 * 86400000) stepMs = 86400000; // > 7 days: 1 day tick
+      else if (remaining > 3 * 86400000) stepMs = 43200000; // 3 to 7 days: 12 hour tick
+      
+      // Quantize "passed" time so the progress bar jumps in chunks
+      let passed = Math.floor(rawPassed / stepMs) * stepMs;
+      passed = Math.max(0, Math.min(passed, total));
+
+      let rawPctLeft = 100 - ((passed / total) * 100);
+      let pctLeft = Math.max(0, Math.min(100, rawPctLeft));
+      
+      let color = 'var(--time-safari)';
+      if(pctLeft <= 30) color = 'var(--time-warning)';
+      if(pctLeft <= 10) color = 'var(--time-critical)';
+      if(pctLeft === 0) color = '#7f1d1d'; // Expired dark red
+
+      let daysLeft = remaining / 86400000;
+      let text = '';
+      if(daysLeft < 0) text = 'Expired';
+      else if(daysLeft < 1) text = Math.round(daysLeft * 24) + ' hrs left';
+      else text = Math.round(daysLeft) + ' days left';
+
+      return { pctLeft, color, text };
+    }
+
+    function calculateProgressInfo(tasks) {
+      if(!tasks || tasks.length === 0) return { pct: 0, text: '0/0' };
+      let done = tasks.filter(t => t.done).length;
+      return { pct: (done / tasks.length) * 100, text: `${done}/${tasks.length}` };
+    }
+
+    function deleteGoal(gId) {
+      if(confirm('Are you sure you want to delete this goal?')) {
+        state.goals = state.goals.filter(g => g.id !== gId);
+        saveLocal();
+      }
+    }
+
+    // --- RENDER ---
+    function render() {
+      if (currentView === 'vault') {
+        renderVault();
+        return;
+      }
+      
+      const gCont = document.getElementById('goals-container');
+      
+      if(state.goals.length === 0) {
+        gCont.innerHTML = `<div class="empty-state"><h3>No active goals.</h3><p style="margin-top:0.5rem">Establish a new goal to begin your focus tracking.</p></div>`;
+        return;
+      }
+
+      gCont.innerHTML = state.goals.map(g => {
+        let isLong = g.type === 'long';
+        let goalTime = calculateTimeRemainingInfo(g.createdAt, g.deadline);
+        
+        // Inner Content depending on Type
+        let contentHtml = '';
+        if(isLong) {
+          // Long Term: Show specific goal time above sprints
+          contentHtml += `
+            <div class="dual-bars" style="background:transparent; border:none; padding:0; margin-bottom:1rem;">
+              <div class="bar-group">
+                <div class="bar-label-row"><span>Macro Goal Timeline</span> <span>${goalTime.text}</span></div>
+                <div class="bar-track"><div class="bar-fill time-fill" style="width: ${goalTime.pctLeft}%; background-color: ${goalTime.color}; opacity: 0.5;"></div></div>
+              </div>
+            </div>
+          `;
+
+          let activeSprint = g.sprints.find(s => s.status === 'active');
+          if(activeSprint) {
+            let sProg = calculateProgressInfo(activeSprint.tasks);
+            let sTime = calculateTimeRemainingInfo(activeSprint.createdAt, activeSprint.deadline);
+            contentHtml += `
+              <div class="sprint-container">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <h4>⚡ Active Sprint: ${activeSprint.title}</h4>
+                  <button class="btn btn-small btn-outline" onclick="openTaskModal('${g.id}', '${activeSprint.id}')">+ Task</button>
+                </div>
+                
+                <div class="dual-bars">
+                  <div class="bar-group">
+                    <div class="bar-label-row"><span style="color:var(--time-safari)">Time Remaining</span> <span>${sTime.text}</span></div>
+                    <div class="bar-track"><div class="bar-fill time-fill" style="width: ${sTime.pctLeft}%; background-color: ${sTime.color};"></div></div>
+                  </div>
+                  <div class="bar-group">
+                    <div class="bar-label-row"><span style="color:var(--accent)">Sprint Progress</span> <span>${sProg.text} Tasks</span></div>
+                    <div class="bar-track"><div class="bar-fill progress-fill" style="width: ${sProg.pct}%;"></div></div>
+                  </div>
+                </div>
+
+                <div class="task-list">
+                  ${renderTasks(activeSprint.tasks, g.id, activeSprint.id)}
+                </div>
+              </div>
+            `;
+          } else {
+            contentHtml += `<button class="btn btn-outline" style="width:100%" onclick="openSprintModal('${g.id}')">+ Plan New Sprint</button>`;
+          }
+
+        } else {
+          // Short Term
+          let prog = calculateProgressInfo(g.tasks);
+          contentHtml += `
+            <div class="dual-bars">
+              <div class="bar-group">
+                <div class="bar-label-row"><span style="color:var(--time-safari)">Time Remaining</span> <span>${goalTime.text}</span></div>
+                <div class="bar-track"><div class="bar-fill time-fill" style="width: ${goalTime.pctLeft}%; background-color: ${goalTime.color};"></div></div>
+              </div>
+              <div class="bar-group">
+                <div class="bar-label-row"><span style="color:var(--accent)">Goal Progress</span> <span>${prog.text} Tasks</span></div>
+                <div class="bar-track"><div class="bar-fill progress-fill" style="width: ${prog.pct}%;"></div></div>
+              </div>
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; margin-top: 0.5rem;"><button class="btn btn-small btn-outline" onclick="openTaskModal('${g.id}', null)">+ Task</button></div>
+            <div class="task-list">
+               ${renderTasks(g.tasks, g.id, null)}
+            </div>
+          `;
+        }
+
+        let typeLabel = isLong ? 'LONG TERM' : 'SHORT TERM';
+
+        return `
+          <div class="card" id="g-${g.id}">
+            <div class="card-header">
+              <div class="card-title">${g.title}</div>
+              <div style="display:flex; gap:0.5rem; align-items:center;">
+                <span class="card-meta">${typeLabel}</span>
+                <button title="Achieve Goal" style="background:none; border:none; color:var(--time-safari); cursor:pointer; font-size: 1.1rem" onclick="archiveGoal('${g.id}')">🏆</button>
+                <button title="Delete Goal" style="background:none; border:none; color:var(--text-muted); cursor:pointer;" onclick="deleteGoal('${g.id}')">🗑️</button>
+              </div>
+            </div>
+            ${contentHtml}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTasks(tasks, gId, sId) {
+      if(!tasks || tasks.length === 0) return '';
+      return tasks.map(t => `
+        <div class="task-item ${t.done ? 'task-done' : ''}">
+          <input type="checkbox" onchange="toggleTask('${gId}', '${sId}', '${t.id}')" ${t.done ? 'checked' : ''}>
+          <span class="task-text">${t.text}</span>
+          <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size: 0.8rem;" onclick="deleteTask('${gId}', '${sId}', '${t.id}')">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    // --- ACTIONS / MODALS ---
+    function closeModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
+    
+    // Create Goal
+    function openGoalModal() { 
+      document.getElementById('g-title').value = '';
+      document.getElementById('goal-modal').style.display = 'flex'; 
+    }
+    
+    function toggleFormLogic() { /* Reserved if we need to auto-hide deadline for long term, but usually smart to have it anyway */ }
+
+    function saveGoal() {
+      let title = document.getElementById('g-title').value;
+      let type = document.getElementById('g-type').value;
+      let deadVal = document.getElementById('g-deadline').value;
+      if(!title) return;
+
+      let goal = {
+        id: generateId(), title, type, createdAt: Date.now(), status: 'active',
+        deadline: deadVal ? new Date(deadVal).getTime() : null,
+        sprints: [], tasks: []
+      };
+
+      state.goals.push(goal);
+      closeModals();
+      saveLocal();
+    }
+
+    // Create Sprint
+    function openSprintModal(gId) {
+      document.getElementById('s-title').value = '';
+      document.getElementById('s-deadline').value = '';
+      document.getElementById('s-goal-id').value = gId;
+      document.getElementById('sprint-modal').style.display = 'flex';
+    }
+
+    function saveSprint() {
+      let gId = document.getElementById('s-goal-id').value;
+      let title = document.getElementById('s-title').value;
+      let deadVal = document.getElementById('s-deadline').value;
+      if(!title) return;
+
+      let goal = state.goals.find(g => g.id === gId);
+      if(goal) {
+        goal.sprints.forEach(s => { if(s.status === 'active') s.status = 'archived'; }); // Archive running sprint
+        goal.sprints.push({
+          id: generateId(), title, createdAt: Date.now(), status: 'active',
+          deadline: deadVal ? new Date(deadVal).getTime() : null,
+          tasks: []
+        });
+      }
+      closeModals();
+      saveLocal();
+    }
+
+    // Tasks 
+    function openTaskModal(gId, sId) {
+      document.getElementById('t-text').value = '';
+      document.getElementById('t-goal-id').value = gId || '';
+      document.getElementById('t-sprint-id').value = sId || '';
+      document.getElementById('task-modal').style.display = 'flex';
+      setTimeout(()=>document.getElementById('t-text').focus(), 100);
+    }
+
+    function saveTask() {
+      let gId = document.getElementById('t-goal-id').value;
+      let sId = document.getElementById('t-sprint-id').value;
+      let text = document.getElementById('t-text').value;
+      if(!text) return;
+
+      let goal = state.goals.find(g => g.id === gId);
+      if(goal) {
+        let taskContainer = sId ? goal.sprints.find(s=>s.id===sId).tasks : goal.tasks;
+        taskContainer.push({ id: generateId(), text, done: false });
+      }
+
+      document.getElementById('t-text').value = '';
+      saveLocal();
+      closeModals();
+    }
+
+    function toggleTask(gId, sId, tId) {
+      let goal = state.goals.find(g => g.id === gId);
+      let taskContainer = (sId && sId !== 'null') ? goal.sprints.find(s=>s.id===sId).tasks : goal.tasks;
+      let t = taskContainer.find(x => x.id === tId);
+      if(t) t.done = !t.done;
+      saveLocal();
+    }
+
+    function deleteTask(gId, sId, tId) {
+      let goal = state.goals.find(g => g.id === gId);
+      if(sId && sId !== 'null') {
+        let sprint = goal.sprints.find(s=>s.id===sId);
+        sprint.tasks = sprint.tasks.filter(x => x.id !== tId);
+      } else {
+        goal.tasks = goal.tasks.filter(x => x.id !== tId);
+      }
+      saveLocal();
+    }
+
+    // Vault Logic
+    function toggleView() {
+      currentView = currentView === 'active' ? 'vault' : 'active';
+      document.getElementById('view-title').innerText = currentView === 'active' ? 'Active Dashboard' : 'Confidence Vault';
+      document.getElementById('btn-toggle-view').innerText = currentView === 'active' ? 'Open Confidence Vault 🏆' : 'Back to Dashboard 🔙';
+      document.getElementById('btn-new-goal').style.display = currentView === 'active' ? 'block' : 'none';
+      
+      document.getElementById('goals-container').style.display = currentView === 'active' ? 'grid' : 'none';
+      document.getElementById('vault-container').style.display = currentView === 'vault' ? 'grid' : 'none';
+      render();
+    }
+
+    function archiveGoal(gId) {
+      let g = state.goals.find(x => x.id === gId);
+      if(!g) return;
+      
+      let tasksCrushed = 0;
+      if(g.type === 'long') {
+         g.sprints.forEach(s => tasksCrushed += s.tasks.filter(t=>t.done).length);
+      } else {
+         tasksCrushed = g.tasks.filter(t=>t.done).length;
+      }
+      
+      // Clean up physics and set timestamp
+      g.status = 'archived';
+      g.completedAt = Date.now();
+      g.tasksCrushed = tasksCrushed;
+
+      state.archivedGoals.push(g);
+      state.goals = state.goals.filter(x => x.id !== gId);
+      saveLocal();
+    }
+
+    function renderVault() {
+      const vCont = document.getElementById('vault-container');
+      if(!state.archivedGoals || state.archivedGoals.length === 0) {
+        vCont.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;"><h3>Vault is empty.</h3><p style="margin-top:0.5rem">Achieve a goal to start building your historical record of crushed tasks.</p></div>`;
+        return;
+      }
+      
+      // Sort newest first
+      let sorted = [...state.archivedGoals].sort((a,b) => b.completedAt - a.completedAt);
+      
+      vCont.innerHTML = sorted.map(g => {
+        let dateObj = new Date(g.completedAt);
+        let dateStr = dateObj.toLocaleDateString() + ' at ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        return \`
+          <div class="card vault-card">
+            <div class="card-header">
+              <div class="card-title">\${g.title}</div>
+              <span class="card-meta">Decimated on \${dateStr}</span>
+            </div>
+            <div class="vault-stats">
+              <span><strong>Tasks Crushed:</strong> \${g.tasksCrushed || 0}</span>
+              <span><strong>Type:</strong> \${g.type === 'long' ? 'Long Term' : 'Short Term'}</span>
+            </div>
+          </div>
+        \`;
+      }).join('');
+    }
+
+    window.onload = init;
+  </script>
+
+  <!-- Google Scripts (Loaded Last) -->
+  <script src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+  <script src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+</body>
+</html>
