@@ -255,9 +255,8 @@
     const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
     const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 
-    // --- STATE ---
     let state = {
-      goals: [], archivedGoals: []
+      goals: [], archivedGoals: [], isSynced: false
     };
     let currentView = 'active'; // 'active' or 'vault'
     let driveFileId = null;
@@ -304,15 +303,20 @@
         client_id: CLIENT_ID,
         scope: SCOPES,
         callback: async (resp) => {
-          if (resp.error) {
-            console.error("Auth Error:", resp.error);
-            return;
-          }
           console.log("Auth Successful");
+          state.isSynced = true;
+          localStorage.setItem('smart_ledger_state', JSON.stringify(state));
           document.getElementById('sync-status').innerText = 'Connected...ing';
           await findOrCreateSaveFile();
         }
       });
+      // Auto-reconnect if we were synced before
+      if (state.isSynced) {
+        console.log("Attempting auto-reconnect...");
+        setTimeout(() => {
+          tokenClient.requestAccessToken({prompt: 'none'});
+        }, 1000);
+      }
     }
 
     function handleAuthClick() {
