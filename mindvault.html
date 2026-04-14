@@ -767,7 +767,8 @@
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
         <div class="form-group">
           <label class="form-label">Subject *</label>
-          <select class="form-select" id="f-subject"></select>
+          <input type="text" class="form-input" id="f-subject" list="subjects-datalist" placeholder="e.g. Java">
+          <datalist id="subjects-datalist"></datalist>
         </div>
         <div class="form-group">
           <label class="form-label">Difficulty (1–5)</label>
@@ -844,7 +845,7 @@ let state = {
   settings: {
     userName: '',
     dailyGoal: { addTopics: 3, completeReviews: true },
-    subjects: ['Java', 'LLB', 'DSA', 'Constitution'],
+    subjects: [],
     notificationsEnabled: false,
     dailyReminderTime: '19:00',
     xpTotal: 0,
@@ -871,7 +872,7 @@ function load() {
   if (raw) {
     const loaded = JSON.parse(raw);
     state = { ...state, ...loaded };
-    if (!state.settings.subjects) state.settings.subjects = ['Java', 'LLB', 'DSA'];
+    if (!state.settings.subjects) state.settings.subjects = [];
     if (!state.settings.todayXP) state.settings.todayXP = 0;
     if (!state.settings.todayXPDate) state.settings.todayXPDate = '';
   }
@@ -1084,7 +1085,7 @@ function getDueChip(t) {
 function openAddModal(editId = null) {
   $('#topic-modal-overlay').classList.add('open');
   const subjects = state.settings.subjects;
-  $('#f-subject').innerHTML = subjects.map(s=>`<option>${s}</option>`).join('');
+  $('#subjects-datalist').innerHTML = subjects.map(s=>`<option value="${s}"></option>`).join('');
   $('#edit-topic-id').value = '';
   $('#topic-modal-title').textContent = 'Add Topic';
   ['f-title','f-notes','f-code','f-source'].forEach(id => $(('#'+id)).value = '');
@@ -1111,7 +1112,13 @@ function saveTopic() {
   const title = $('#f-title').value.trim();
   if (!title) { toast('Title is required', 'error'); return; }
   const editId = $('#edit-topic-id').value;
-  const subject = $('#f-subject').value;
+  const subject = $('#f-subject').value.trim();
+  if (!subject) { toast('Subject is required', 'error'); return; }
+  
+  // Register new subject if not exists
+  if (!state.settings.subjects.includes(subject)) {
+    state.settings.subjects.push(subject);
+  }
   const difficulty = parseInt($('#f-difficulty').value) || 3;
   const rawTags = $('#f-tags').value;
   const tags = rawTags.split(/[\s,]+/).filter(Boolean).map(t => t.startsWith('#') ? t : '#'+t);
