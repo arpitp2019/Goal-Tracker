@@ -191,9 +191,15 @@
     .stepper-btn:hover { background: var(--accent-primary); color: #000; }
     .stepper-val { font-weight: 600; width: 24px; text-align: center; }
 
-    /* Analytics View */
+    /* Analytics View & Grid */
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
     .chart-container { height: 250px; width: 100%; display: flex; align-items: center; justify-content: center; position: relative;}
+
+    .heatmap-grid { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 1rem; }
+    .heat-cell { width: 26px; height: 26px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: transparent; font-weight: 700; }
+    .heat-cell:hover { transform: scale(1.1); color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.2); }
+    .heat-cell.active { color: #000; box-shadow: inset 0 2px 4px rgba(0,0,0,0.3); }
+    .heat-cell.active:hover { opacity: 0.8; }
 
     /* AI Coach Nova */
     #nova-chat-btn {
@@ -381,6 +387,9 @@
         <a href="#habits" class="nav-item" data-view="habits">
           <i data-lucide="list"></i> My Habits
         </a>
+        <a href="#grid" class="nav-item" data-view="grid">
+          <i data-lucide="grid"></i> Progress Grid
+        </a>
         <a href="#analytics" class="nav-item" data-view="analytics">
           <i data-lucide="bar-chart-2"></i> Analytics
         </a>
@@ -439,6 +448,15 @@
         </div>
       </section>
 
+      <!-- VIEW: GRID (MONTHLY DASHBOARD) -->
+      <section id="view-grid" class="view-section">
+        <h1 class="page-title">Progress Grid</h1>
+        <p class="page-subtitle">Your monthly consistency at a glance.</p>
+        <div id="grid-container" style="display:flex; flex-direction:column; gap:1.5rem;">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
       <!-- VIEW: ANALYTICS -->
       <section id="view-analytics" class="view-section">
         <h1 class="page-title">Analytics</h1>
@@ -489,6 +507,9 @@
     </a>
     <a href="#habits" class="mobile-nav-item" data-view="habits">
       <i data-lucide="list"></i> <span>Habits</span>
+    </a>
+    <a href="#grid" class="mobile-nav-item" data-view="grid">
+      <i data-lucide="grid"></i> <span>Grid</span>
     </a>
     <a href="#analytics" class="mobile-nav-item" data-view="analytics">
       <i data-lucide="bar-chart-2"></i> <span>Data</span>
@@ -658,6 +679,7 @@
 
       if(hash === 'today') renderToday();
       if(hash === 'habits') renderHabits();
+      if(hash === 'grid') renderGrid();
       if(hash === 'analytics') renderAnalytics();
       if(hash === 'settings') renderSettings();
     }
@@ -767,9 +789,10 @@
     }
 
     // Logic: Habits
-    window.toggleHabitLog = function(hId) {
+    window.toggleHabitLog = function(hId, overrideDate) {
+      let targetDate = overrideDate || todayStr;
       let habit = state.habits.find(h => h.id === hId);
-      let log = state.logs.find(l => l.habitId === hId && l.date === todayStr);
+      let log = state.logs.find(l => l.habitId === hId && l.date === targetDate);
       
       if(log) {
         if(log.status === 'completed') {
@@ -778,12 +801,13 @@
            log.status = 'completed'; log.count = habit.targetCount; addPoints(10);
         }
       } else {
-        state.logs.push({ id: uuid(), habitId: hId, date: todayStr, status: 'completed', count: habit.targetCount });
+        state.logs.push({ id: uuid(), habitId: hId, date: targetDate, status: 'completed', count: habit.targetCount });
         addPoints(10);
       }
       
       saveState();
       renderToday();
+      if(window.location.hash.includes('grid')) renderGrid();
       checkAllDone();
     }
 
@@ -943,6 +967,50 @@
          saveState();
          renderHabits();
       }
+    }
+
+    // Grid Logic
+    window.renderGrid = function() {
+      const container = document.getElementById('grid-container');
+      if(state.habits.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted)">No habits available. Add some to track progress.</p>`;
+        return;
+      }
+      
+      let html = '';
+      
+      let now = new Date();
+      let year = now.getFullYear();
+      let month = now.getMonth();
+      let daysInMonth = new Date(year, month + 1, 0).getDate();
+      let monthName = now.toLocaleString('default', { month: 'long' });
+
+      state.habits.forEach(h => {
+        let cellsHtml = '';
+        for(let d = 1; d <= daysInMonth; d++) {
+          let dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          let log = state.logs.find(l => l.habitId === h.id && l.date === dateStr);
+          let isDone = log && log.status === 'completed';
+          let bg = isDone ? h.color : 'rgba(255,255,255,0.05)';
+          
+          cellsHtml += `<div class="heat-cell ${isDone ? 'active' : ''}" style="background:${bg}; border-color:${isDone ? h.color : 'rgba(255,255,255,0.05)'}" title="${dateStr}" onclick="toggleHabitLog('${h.id}', '${dateStr}')">${d}</div>`;
+        }
+
+        html += `
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 0.5rem; align-items:center;">
+              <div style="display:flex; align-items:center; gap:0.5rem;">
+                <i data-lucide="${h.icon}" style="color:${h.color}; width:18px;height:18px;"></i>
+                <h4 style="margin:0">${h.name}</h4>
+              </div>
+              <span style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">${monthName} ${year}</span>
+            </div>
+            <div class="heatmap-grid">${cellsHtml}</div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      lucide.createIcons();
     }
 
     window.pickColor = function(el, color) {
