@@ -341,23 +341,79 @@
     @media (min-width: 769px) {
       .mobile-nav { display: none; }
     }
+    header {
+      background: var(--bg-surface);
+      backdrop-filter: blur(20px);
+      padding: 0 2rem;
+      height: 72px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--accent-primary);
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--accent-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .suite-nav {
+      display: flex;
+      gap: 0.5rem;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .nav-pill {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.4rem 1.25rem;
+      border-radius: 50px;
+      transition: all 0.2s;
+    }
+
+    .nav-pill:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-pill.active {
+      color: #fff;
+      background: var(--accent-primary);
+      box-shadow: 0 4px 12px rgba(79, 152, 163, 0.3);
+    }
   </style>
 </head>
 <body>
 
-  <header style="background: var(--bg-surface); border-bottom: 1px solid var(--accent-primary); padding: 1.25rem 2rem; position: sticky; top: 0; z-index: 50;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <h1 style="font-family: var(--font-display); font-size: 1.8rem; color: var(--accent-primary); margin:0;">🌱 HabitFlow AI</h1>
+  <header>
+    <div class="header-left">
+      <a href="index.html" class="logo">🌱 FlowDash</a>
+    </div>
+    <nav class="suite-nav">
+      <a href="index.html" class="nav-pill">🏠 Home</a>
+      <a href="goal-tracker.html" class="nav-pill">🎯 Goals</a>
+      <a href="habit-tracker.html" class="nav-pill active">🌱 Habits</a>
+      <a href="mindvault.html" class="nav-pill">🧠 Vault</a>
+    </nav>
+    <div class="header-right">
       <div style="display:flex; align-items:center; gap:0.75rem;">
         <span id="sync-status" style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Local Save</span>
-        <button id="btn-auth" class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.8rem; border:1px solid var(--accent-primary); background:transparent; color:var(--text-main); border-radius:12px; cursor:pointer;" onclick="handleAuthClick()">Connect Google Drive</button>
+        <button id="btn-auth" class="btn btn-outline" style="padding:0.4rem 0.85rem; font-size:0.8rem; border-radius:12px; cursor:pointer;" onclick="handleAuthClick()">Connect Drive</button>
       </div>
     </div>
-    <nav style="display: flex; gap: 0.5rem; margin-top: 1rem; width: 100%; justify-content: flex-start; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
-      <a href="index.html" style="color: var(--text-muted); text-decoration: none; padding: 0.4rem 1.2rem; border-radius: 50px; font-weight: 700; transition: all 0.2s; font-size: 0.85rem;" onmouseover="this.style.color='#f0f0ff'; this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.color='var(--text-muted)'; this.style.background='transparent';">🏠 Home</a>
-      <a href="goal-tracker.html" style="color: var(--text-muted); text-decoration: none; padding: 0.4rem 1.2rem; border-radius: 50px; font-weight: 700; transition: all 0.2s; font-size: 0.85rem;" onmouseover="this.style.color='#f0f0ff'; this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.color='var(--text-muted)'; this.style.background='transparent';">🎯 Goal Tracker</a>
-      <a href="habit-tracker.html" style="color: white; text-decoration: none; padding: 0.4rem 1.2rem; border-radius: 50px; font-weight: 800; background: var(--accent-primary); box-shadow: 0 4px 15px rgba(79, 152, 163, 0.3); font-size: 0.85rem;">🌱 HabitFlow AI</a>
-    </nav>
   </header>
 
   <!-- Onboarding -->

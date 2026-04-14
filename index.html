@@ -38,47 +38,57 @@
     header {
       background: var(--bg-header);
       backdrop-filter: blur(20px);
-      padding: 1.25rem 2rem;
+      padding: 0 2rem;
+      height: 72px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid rgba(79,152,163,0.15);
+      border-bottom: 1px solid rgba(79,152,163,0.15);
       position: sticky;
       top: 0;
-      z-index: 50;
+      z-index: 100;
     }
 
-    h1 {
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    
+    .logo {
       font-family: var(--font-display);
-      font-size: 1.8rem;
-      background: linear-gradient(135deg, #a78bfa, #06b6d4);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--accent-habit);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     nav {
       display: flex;
-      gap: 1rem;
+      gap: 0.5rem;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
     }
 
-    .nav-link {
+    .nav-pill {
       color: var(--text-muted);
       text-decoration: none;
       font-weight: 700;
-      font-size: 0.9rem;
-      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      padding: 0.4rem 1.25rem;
       border-radius: 50px;
       transition: all 0.2s;
     }
 
-    .nav-link:hover {
+    .nav-pill:hover {
       color: var(--text-main);
       background: rgba(255, 255, 255, 0.05);
     }
 
-    .nav-link.active {
-      color: var(--text-main);
-      background: rgba(124, 58, 237, 0.2);
-      border: 1px solid rgba(124, 58, 237, 0.3);
+    .nav-pill.active {
+      color: #fff;
+      background: var(--accent-habit);
+      box-shadow: 0 4px 12px rgba(79, 152, 163, 0.3);
     }
 
     main {
@@ -253,13 +263,18 @@
 <body>
 
   <header>
-    <h1>🚀 FlowDash</h1>
+    <div class="header-left">
+      <a href="index.html" class="logo">🚀 FlowDash</a>
+    </div>
     <nav>
-      <a href="index.html" class="nav-link active">🏠 Home</a>
-      <a href="goal-tracker.html" class="nav-link">🎯 Goals</a>
-      <a href="habit-tracker.html" class="nav-link">🌱 Habits</a>
-      <a href="mindvault.html" class="nav-link">🧠 Vault</a>
+      <a href="index.html" class="nav-pill active">🏠 Home</a>
+      <a href="goal-tracker.html" class="nav-pill">🎯 Goals</a>
+      <a href="habit-tracker.html" class="nav-pill">🌱 Habits</a>
+      <a href="mindvault.html" class="nav-pill">🧠 Vault</a>
     </nav>
+    <div class="header-right" style="width: 150px; display: flex; justify-content: flex-end;">
+      <!-- Placeholder for symmetry or profile -->
+    </div>
   </header>
 
   <main>

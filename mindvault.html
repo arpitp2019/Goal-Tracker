@@ -133,8 +133,64 @@
       font-size: 0.8rem; font-weight: 600; color: var(--accent);
     }
 
-    /* MAIN CONTENT */
     .main { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
+    
+    header {
+      background: var(--bg-sidebar);
+      backdrop-filter: blur(20px);
+      padding: 0 2rem;
+      height: 72px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .suite-nav {
+      display: flex;
+      gap: 0.5rem;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .nav-pill {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.4rem 1.25rem;
+      border-radius: 50px;
+      transition: all 0.2s;
+    }
+
+    .nav-pill:hover {
+      color: var(--text);
+      background: var(--border);
+    }
+
+    .nav-pill.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 4px 12px var(--accent-light);
+    }
+
+    .app-shell { display: flex; height: calc(100vh - 72px); overflow: hidden; }
+
     .topbar {
       display: flex; align-items: center; justify-content: space-between;
       padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
@@ -487,6 +543,21 @@
 </head>
 <body>
 
+  <header>
+    <div class="header-left">
+      <a href="index.html" class="logo">🧠 FlowDash</a>
+    </div>
+    <nav class="suite-nav">
+      <a href="index.html" class="nav-pill">🏠 Home</a>
+      <a href="goal-tracker.html" class="nav-pill">🎯 Goals</a>
+      <a href="habit-tracker.html" class="nav-pill">🌱 Habits</a>
+      <a href="mindvault.html" class="nav-pill active">🧠 Vault</a>
+    </nav>
+    <div class="header-right" style="width: 150px; display: flex; justify-content: flex-end;">
+      <!-- Symmetrical spacer -->
+    </div>
+  </header>
+
 <div class="app-shell">
   <!-- SIDEBAR (Desktop) -->
   <aside class="sidebar" id="sidebar">
@@ -505,11 +576,6 @@
       <div class="nav-item" data-view="analytics"><i data-lucide="bar-chart-2"></i> Analytics</div>
       <div class="nav-item" data-view="settings"><i data-lucide="settings"></i> Settings</div>
       
-      <div class="divider"></div>
-      <div class="nav-section-label">FlowDash Suite</div>
-      <a href="index.html" class="nav-item"><i data-lucide="home"></i> Home</a>
-      <a href="goal-tracker.html" class="nav-item"><i data-lucide="target"></i> Goals</a>
-      <a href="habit-tracker.html" class="nav-item"><i data-lucide="activity"></i> Habits</a>
     </nav>
     <div class="sidebar-bottom">
       <div class="streak-badge">🔥 <span id="sidebar-streak">0</span> day streak</div>

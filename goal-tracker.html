@@ -49,17 +49,55 @@
     header {
       background: var(--bg-header);
       backdrop-filter: blur(20px);
-      padding: 1.25rem 2rem;
-      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 2rem;
+      height: 72px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       border-bottom: 1px solid var(--accent2);
-      position: sticky; top: 0; z-index: 50;
+      position: sticky; top: 0; z-index: 100;
     }
 
-    h1 {
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    
+    .logo {
       font-family: var(--font-display);
-      font-size: 1.8rem;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-decoration: none;
       color: var(--accent2);
-      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .suite-nav {
+      display: flex;
+      gap: 0.5rem;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .nav-pill {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.4rem 1.25rem;
+      border-radius: 50px;
+      transition: all 0.2s;
+    }
+
+    .nav-pill:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-pill.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 4px 12px rgba(79, 152, 163, 0.3);
     }
     h2 { font-family: var(--font-display); font-size: 1.4rem; font-weight: 400; margin-bottom: 1rem; color: var(--text-main); }
     h3 { font-size: 1.05rem; font-weight: 700; }
@@ -283,8 +321,6 @@
 
     /* ═══════════════════ WIN CONDITION ═══════════════════ */
     .success-criteria {
-      font-size: 0.82rem; font-weight: 700;
-      color: var(--text-main);
       background: rgba(79, 152, 163, 0.08);
       border: 1px solid rgba(79, 152, 163, 0.25);
       border-radius: 12px; padding: 0.5rem 0.9rem;
@@ -321,18 +357,21 @@
 <body>
 
   <header>
-    <h1>🎯 SMART Goal Tracker</h1>
-    <div class="drive-status">
-      <span class="status-text" id="sync-status">Local Save</span>
-      <button id="btn-auth" class="btn btn-outline btn-small" onclick="handleAuthClick()">Connect Google Drive</button>
+    <div class="header-left">
+      <a href="index.html" class="logo">🎯 FlowDash</a>
     </div>
-    <!-- Global Dashboard Navigation -->
-    <nav style="display: flex; gap: 0.5rem; margin-top: 1rem; width: 100%; justify-content: flex-start; border-top: 1px solid rgba(124,58,237,0.15); padding-top: 1rem;">
-      <a href="index.html" style="color: var(--text-muted); text-decoration: none; padding: 0.4rem 1.2rem; border-radius: 50px; font-weight: 700; transition: all 0.2s; font-size: 0.85rem;" onmouseover="this.style.color='#f0f0ff'; this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.color='var(--text-muted)'; this.style.background='transparent';">🏠 Home</a>
-      <a href="goal-tracker.html" style="color: white; text-decoration: none; padding: 0.4rem 1.2rem; border-radius: 50px; font-weight: 800; background: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.3); font-size: 0.85rem;">🎯 Goals</a>
-      <a href="habit-tracker.html" style="color: var(--text-muted); text-decoration: none; padding: 0.4rem 1.2rem; border-radius: 50px; font-weight: 700; transition: all 0.2s; font-size: 0.85rem;" onmouseover="this.style.color='#f0f0ff'; this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.color='var(--text-muted)'; this.style.background='transparent';">🌱 Habits</a>
-      <a href="mindvault.html" style="color: var(--text-muted); text-decoration: none; padding: 0.4rem 1.2rem; border-radius: 50px; font-weight: 700; transition: all 0.2s; font-size: 0.85rem;" onmouseover="this.style.color='#f0f0ff'; this.style.background='rgba(255,255,255,0.05)';" onmouseout="this.style.color='var(--text-muted)'; this.style.background='transparent';">🧠 Vault</a>
+    <nav class="suite-nav">
+      <a href="index.html" class="nav-pill">🏠 Home</a>
+      <a href="goal-tracker.html" class="nav-pill active">🎯 Goals</a>
+      <a href="habit-tracker.html" class="nav-pill">🌱 Habits</a>
+      <a href="mindvault.html" class="nav-pill">🧠 Vault</a>
     </nav>
+    <div class="header-right">
+      <div class="drive-status">
+        <span class="status-text" id="sync-status">Local Save</span>
+        <button id="btn-auth" class="btn btn-outline btn-small" onclick="handleAuthClick()">Connect Drive</button>
+      </div>
+    </div>
   </header>
 
 
