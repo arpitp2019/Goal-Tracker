@@ -696,6 +696,7 @@
     let tokenClient = null;
     let gapiInited = false;
     let driveFileId = null;
+    let todayStr = getLocalDateStr();
 
     // System Init
     let state = {
@@ -728,28 +729,30 @@
       
       updateUI();
       setupRouting();
-      if(window.location.hash.includes('today')) renderToday();
-      else if(window.location.hash.includes('grid')) renderGrid();
+      const hash = window.location.hash.substring(1) || 'today';
+      if(hash === 'today') renderToday();
+      else if(hash === 'grid') renderGrid();
+      else if(hash === 'habits') renderHabits();
       
-      // 2. Initialize Drive and Sync
-      await AuthService.Drive.init();
-      if (AuthService.Drive.driveFileId) {
-        console.log("Drive Syncing for Habits...");
-        const remoteData = await AuthService.Drive.sync('habits', state.habits);
-        if (remoteData) {
-          state.habits = remoteData;
-          saveState(true); // Save local without triggering another sync
-        }
-      }
-
-      // 3. Lucide icons
-      if(!state.onboarded) showOnboarding();
-
-      setupRouting();
-      updateUI();
       lucide.createIcons();
       document.getElementById('date-display').innerText = new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'short', day: 'numeric'});
-      
+
+      // 2. Initialize Drive and Sync in background
+      AuthService.Drive.init().then(async () => {
+        if (AuthService.Drive.driveFileId) {
+          console.log("Drive Syncing for Habits...");
+          const remoteData = await AuthService.Drive.sync('habits', state.habits);
+          if (remoteData) {
+            state.habits = remoteData;
+            saveState(true); // Save local without triggering another sync
+            handleRoute(); // Refresh view
+          }
+        }
+      });
+
+      // 3. Lucide icons and onboarding
+      if(!state.onboarded) showOnboarding();
+
       // Check for day rollover every minute
       setInterval(checkDayRollover, 60000);
     }
@@ -767,13 +770,7 @@
       }
     }
 
-    function saveState() {
-      localStorage.setItem('habitflow_state', JSON.stringify(state));
-      updateUI();
-      if(state.isSynced && window.syncToDrive) {
-        window.syncToDrive();
-      }
-    }
+    // saveState is defined at the bottom with unified sync logic
 
     // UUID
     function uuid() { return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15); }
@@ -852,9 +849,12 @@
 
     // UI Updates
     function updateUI() {
-      document.getElementById('ui-name').innerText = state.profile.name || 'User';
-      document.getElementById('ui-avatar').innerText = state.profile.avatar || '👤';
-      document.getElementById('ui-level').innerText = state.profile.level;
+      const nameEl = document.getElementById('ui-name');
+      const avatarEl = document.getElementById('ui-avatar');
+      const levelEl = document.getElementById('ui-level');
+      if(nameEl) nameEl.innerText = state.profile.name || 'User';
+      if(avatarEl) avatarEl.innerText = state.profile.avatar || '👤';
+      if(levelEl) levelEl.innerText = state.profile.level;
     }
 
     // Today View Render
@@ -1397,9 +1397,10 @@
         AuthService.Drive.sync('habits', state.habits);
       }
     }
+
+    init();
   </script>
 
-  <!-- Google Scripts (Loaded Last) -->
-  <script src="https://apis.google.com/js/api.js"></script>
+  <!-- Google Scripts (Handled by auth.js) -->
 </body>
 </html>
