@@ -697,11 +697,8 @@
 
   <!-- Scripts -->
   <script>
-    // --- APP CONFIG ---
-    const CLIENT_ID = '216540498622-2ccjhuedqhpkelaea8nv2suaicps07ov.apps.googleusercontent.com'; 
-    const API_KEY = 'AIzaSyDD8NYtI5kgrTEfaqX3Uiq6ovUBiXp83Dc';
-    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
-    const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+    // --- SHARED CONFIG ---
+    // (Constants already loaded from auth.js)
 
     let tokenClient = null;
     let gapiInited = false;
@@ -730,6 +727,7 @@
       }
       
       updateUI();
+      setupRouting();
       if(window.location.hash.includes('today')) renderToday();
       else if(window.location.hash.includes('grid')) renderGrid();
       
