@@ -686,6 +686,7 @@
   <script>
     // --- SHARED CONFIG ---
     // (Constants already loaded from auth.js)
+    const HABIT_STATE_KEY = 'habitflow_state';
 
     let tokenClient = null;
     let gapiInited = false;
@@ -715,9 +716,9 @@
       }
 
       // 1. Load Local State
-      let saved = localStorage.getItem('habitflow_state');
+      let saved = AuthService.Storage.loadJSON(HABIT_STATE_KEY, state);
       if(saved) {
-        state = JSON.parse(saved);
+        state = saved;
         if(!state.profile || !state.profile.name) state.profile = { name: "Explorer", avatar: "👤" };
       }
       
@@ -1312,7 +1313,7 @@
     
     window.resetData = function() {
       if(confirm("DANGER! This wipes all data. Continue?")){
-        localStorage.removeItem('habitflow_state');
+        AuthService.Storage.clearJSON(HABIT_STATE_KEY);
         window.location.reload();
       }
     }
@@ -1385,7 +1386,7 @@
     }
 
     function saveState(skipSync = false) {
-      localStorage.setItem('habitflow_state', JSON.stringify(state));
+      AuthService.Storage.saveJSON(HABIT_STATE_KEY, state);
       updateUI();
       if (!skipSync) {
         AuthService.Drive.sync('habits', state.habits);
