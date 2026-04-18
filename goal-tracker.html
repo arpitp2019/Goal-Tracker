@@ -473,6 +473,7 @@
   <script>
     // --- APP CONFIG ---
     // (Constants already loaded from auth.js)
+    const GOAL_STATE_KEY = 'smart_ledger_state';
 
     let state = {
       goals: [], archivedGoals: [], isSynced: false
@@ -493,11 +494,10 @@
       }
 
       // 1. Load local state first
-      const saved = localStorage.getItem('smart_ledger_state');
+      const saved = AuthService.Storage.loadJSON(GOAL_STATE_KEY, state);
       if (saved) { 
-        let parsed = JSON.parse(saved);
-        if(!parsed.archivedGoals) parsed.archivedGoals = [];
-        state = parsed; 
+        if(!saved.archivedGoals) saved.archivedGoals = [];
+        state = saved; 
       }
       
       render();
@@ -522,7 +522,7 @@
 
     // --- UTILS ---
     function saveLocal(skipSync = false) {
-      localStorage.setItem('smart_ledger_state', JSON.stringify(state));
+      AuthService.Storage.saveJSON(GOAL_STATE_KEY, state);
       render();
       if (!skipSync) {
         AuthService.Drive.sync('goals', state.goals);

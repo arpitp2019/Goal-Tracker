@@ -940,18 +940,18 @@ let sessionXP = 0;
 let sessionRatings = { 0:0, 1:0, 2:0, 3:0 };
 let activeTopicDetailId = null;
 let journalSelectedDate = getLocalDateStr();
+const MINDVAULT_STATE_KEY = 'mindvault_v2';
 
 // ── PERSISTENCE ──
 function save(skipSync = false) { 
-  localStorage.setItem('mindvault_v2', JSON.stringify(state)); 
+  AuthService.Storage.saveJSON(MINDVAULT_STATE_KEY, state); 
   if (!skipSync) {
     AuthService.Drive.sync('vault', state);
   }
 }
 function load() {
-  const raw = localStorage.getItem('mindvault_v2');
-  if (raw) {
-    const loaded = JSON.parse(raw);
+  const loaded = AuthService.Storage.loadJSON(MINDVAULT_STATE_KEY, null);
+  if (loaded) {
     state = { ...state, ...loaded };
     if (!state.settings.subjects) state.settings.subjects = [];
     if (!state.settings.todayXP) state.settings.todayXP = 0;
@@ -1822,7 +1822,7 @@ window.importJSON = function(input) {
 
 function clearAllData() {
   if (confirm('⚠️ This will permanently delete ALL your topics, journals, and settings. Are you absolutely sure?')) {
-    localStorage.removeItem('mindvault_v2');
+    AuthService.Storage.clearJSON(MINDVAULT_STATE_KEY);
     location.reload();
   }
 }

@@ -402,21 +402,26 @@
         }
 
         // Google Authentication Handlers
-        function handleGoogleResponse(response) {
+        async function handleGoogleResponse(response) {
             const payload = decodeJwtResponse(response.credential);
             console.log("Google Login Payload:", payload);
             
             try {
                 AuthService.loginWithGoogle(payload);
-                
-                // Immediately request Drive access as well
-                AuthService.Drive.authorize();
-                
-                showSuccess();
             } catch (err) {
                 console.error("Google Auth local error:", err);
                 alert("Failed to establish session: " + err.message);
+                return;
             }
+
+            try {
+                // Immediately request Drive access as well
+                await AuthService.Drive.authorize();
+            } catch (err) {
+                console.warn("Google Drive setup finished with an issue:", err);
+            }
+
+            showSuccess();
         }
 
         function decodeJwtResponse(token) {
