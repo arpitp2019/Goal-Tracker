@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindVault — Spaced Repetition Journal</title>
+  <script src="auth.js"></script>
+  <meta name="description" content="A personal spaced repetition learning journal powered by the Ebbinghaus Forgetting Curve.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
+
+  <!-- Libraries -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+
+  <style>
+    /* ═══════════ DESIGN TOKENS ═══════════ */
+    :root {
+      --bg: #f7f6f2;
+      --bg-card: #ffffff;
+      --bg-sidebar: #f0ede8;
+      --bg-input: #eceae5;
+      --border: #e0ddd8;
+      --text: #1c1a17;
+      --text-muted: #6b6860;
+      --accent: #01696f;
+      --accent-2: #02878e;
+      --accent-light: rgba(1,105,111,0.1);
+      --red: #c0392b;
+      --orange: #d97706;
+      --green: #059669;
+      --yellow: #b45309;
+      --shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-pill: 50px;
+      --font: 'Satoshi', system-ui, sans-serif;
+      --font-display: 'Boska', Georgia, serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --sidebar-w: 240px;
+      --transition: 0.18s ease;
+    }
+
+    [data-theme="dark"] {
+      --bg: #171614;
+      --bg-card: #1f1e1b;
+      --bg-sidebar: #141312;
+      --bg-input: #2a2825;
+      --border: #2e2c29;
+      --text: #f0ede8;
+      --text-muted: #8c8880;
+      --accent: #4f98a3;
+      --accent-2: #6ab5c0;
+      --accent-light: rgba(79,152,163,0.12);
+      --shadow: 0 1px 4px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    /* ═══════════ RESET ═══════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; height: 100%; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+      transition: background var(--transition), color var(--transition);
+    }
+    button { font-family: var(--font); cursor: pointer; border: none; background: none; }
+    input, select, textarea { font-family: var(--font); color: var(--text); }
+    a { text-decoration: none; color: inherit; }
+    svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* ═══════════ LAYOUT ═══════════ */
+    .app-shell { display: flex; height: 100vh; overflow: hidden; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 0; z-index: 30;
+      transition: transform var(--transition);
+      flex-shrink: 0;
+    }
+    .sidebar-logo {
+      padding: 1.25rem 1.25rem 1rem;
+      display: flex; align-items: center; gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo-text {
+      font-family: var(--font-display);
+      font-size: 1.4rem; font-weight: 700;
+      color: var(--accent);
+    }
+    .sidebar-nav { padding: 0.75rem 0.5rem; flex: 1; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.65rem;
+      padding: 0.6rem 0.75rem; border-radius: var(--radius-sm);
+      font-weight: 500; font-size: 0.875rem; color: var(--text-muted);
+      transition: all var(--transition); cursor: pointer;
+    }
+    .nav-item:hover { background: var(--border); color: var(--text); }
+    .nav-item.active { background: var(--accent-light); color: var(--accent); font-weight: 600; }
+    .nav-item.active svg { stroke: var(--accent); }
+    .nav-section-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 0.75rem 0.75rem 0.25rem;
+    }
+    .sidebar-bottom {
+      padding: 0.75rem 0.5rem;
+      border-top: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .streak-badge {
+      display: flex; align-items: center; gap: 0.4rem;
+      padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);
+      background: var(--accent-light);
+      font-size: 0.8rem; font-weight: 600; color: var(--accent);
+    }
+
+    .main { flex: 1; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; }
+    
+    header {
+      background: var(--bg-sidebar);
+      backdrop-filter: blur(20px);
+      padding: 0 2rem;
+      height: 72px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .suite-nav {
+      display: flex;
+      gap: 0.5rem;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .nav-pill {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.4rem 1.25rem;
+      border-radius: 50px;
+      transition: all 0.2s;
+    }
+
+    .nav-pill:hover {
+      color: var(--text);
+      background: var(--border);
+    }
+
+    .nav-pill.active {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 4px 12px var(--accent-light);
+    }
+
+    .app-shell { display: flex; height: calc(100vh - 72px); overflow: hidden; }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.5rem; border-bottom: 1px solid var(--border);
+      background: var(--bg); position: sticky; top: 0; z-index: 20;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 0.75rem; }
+    .topbar-title { font-size: 1.1rem; font-weight: 700; }
+    .topbar-right { display: flex; align-items: center; gap: 0.5rem; }
+
+    .content { padding: 1.5rem; flex: 1; }
+
+    /* ═══════════ COMPONENTS ═══════════ */
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.55rem 1.1rem; border-radius: var(--radius-pill);
+      font-size: 0.875rem; font-weight: 600;
+      transition: all var(--transition); cursor: pointer; border: none;
+    }
+    .btn-primary {
+      background: var(--accent); color: white;
+      box-shadow: 0 2px 8px rgba(1,105,111,0.25);
+    }
+    .btn-primary:hover { background: var(--accent-2); transform: translateY(-1px); }
+    .btn-secondary {
+      background: var(--bg-input); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-ghost { color: var(--text-muted); padding: 0.4rem; }
+    .btn-ghost:hover { background: var(--bg-input); color: var(--text); }
+    .btn-danger { background: rgba(192,57,43,0.1); color: var(--red); }
+    .btn-danger:hover { background: rgba(192,57,43,0.2); }
+    .btn-icon { padding: 0.5rem; border-radius: var(--radius-sm); }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.25rem;
+      box-shadow: var(--shadow); transition: all var(--transition);
+    }
+    .card:hover { box-shadow: var(--shadow-lg); }
+    .card-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .card-meta { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* Badges / Chips */
+    .chip {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.2rem 0.6rem; border-radius: var(--radius-pill);
+      font-size: 0.75rem; font-weight: 600; border: none;
+    }
+    .chip-accent { background: var(--accent-light); color: var(--accent); }
+    .chip-green { background: rgba(5,150,105,0.12); color: var(--green); }
+    .chip-orange { background: rgba(217,119,6,0.12); color: var(--orange); }
+    .chip-red { background: rgba(192,57,43,0.12); color: var(--red); }
+    .chip-muted { background: var(--bg-input); color: var(--text-muted); }
+
+    /* Progress Bar */
+    .progress-track { height: 6px; background: var(--bg-input); border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s ease; }
+
+    /* Form Inputs */
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+    .form-label { font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+    .form-input, .form-select, .form-textarea {
+      background: var(--bg-input); border: 1px solid var(--border);
+      color: var(--text); padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-sm); font-size: 0.9rem;
+      transition: border-color var(--transition);
+      width: 100%;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+    .form-select option { background: var(--bg-card); }
+    .form-textarea { resize: vertical; min-height: 80px; }
+
+    /* Rating Stars */
+    .stars { display: flex; gap: 0.2rem; }
+    .star { width: 20px; height: 20px; cursor: pointer; color: var(--border); transition: color var(--transition); }
+    .star.filled { color: var(--orange); }
+
+    /* ═══════════ VIEWS ═══════════ */
+    .view { display: none; animation: fadeIn 0.2s ease; }
+    .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- DASHBOARD --- */
+    .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    @media (max-width: 768px) { .dash-grid { grid-template-columns: 1fr; } }
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
+    @media (max-width: 600px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem;
+      display: flex; flex-direction: column; gap: 0.15rem;
+    }
+    .stat-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); }
+    .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+    .stat-sub { font-size: 0.75rem; color: var(--text-muted); }
+
+    .review-queue-card { margin-bottom: 1rem; }
+    .rq-count { font-size: 3rem; font-weight: 700; color: var(--accent); line-height: 1; margin: 0.5rem 0; }
+    .rq-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    .empty-state {
+      text-align: center; padding: 2.5rem 1rem;
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    }
+    .empty-state-icon { font-size: 2.5rem; }
+    .empty-state h3 { font-weight: 700; }
+    .empty-state p { color: var(--text-muted); font-size: 0.875rem; max-width: 280px; }
+
+    .mini-cal-row { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.25rem; }
+    .mini-cal-day {
+      display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+      min-width: 44px; padding: 0.5rem 0.25rem; border-radius: var(--radius-sm);
+      background: var(--bg-input); flex-shrink: 0;
+    }
+    .mini-cal-day.has-items { background: var(--accent-light); }
+    .mini-cal-day.today { border: 2px solid var(--accent); }
+    .mini-cal-num { font-size: 0.85rem; font-weight: 700; }
+    .mini-cal-label { font-size: 0.65rem; color: var(--text-muted); }
+    .mini-cal-badge { font-size: 0.7rem; font-weight: 700; color: var(--accent); }
+
+    /* --- REVIEW SESSION --- */
+    #review-view {
+      position: fixed; inset: 0; background: var(--bg);
+      z-index: 100; display: none; flex-direction: column;
+    }
+    #review-view.active { display: flex; }
+    .review-topbar { padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .review-progress-bar { height: 4px; background: var(--bg-input); }
+    .review-progress-fill { height: 100%; background: var(--accent); transition: width 0.4s ease; }
+    .review-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+    .flip-card { width: 100%; max-width: 600px; perspective: 1200px; cursor: pointer; }
+    .flip-card-inner { position: relative; transition: transform 0.5s; transform-style: preserve-3d; min-height: 300px; }
+    .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+    .flip-face {
+      position: absolute; inset: 0; backface-visibility: hidden;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2rem; display: flex; flex-direction: column;
+      box-shadow: var(--shadow-lg);
+    }
+    .flip-back { transform: rotateY(180deg); overflow-y: auto; }
+    .flip-front { align-items: center; justify-content: center; gap: 1rem; }
+    .flip-hint { font-size: 0.8rem; color: var(--text-muted); margin-top: auto; }
+    .review-notes { font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap; }
+    .review-footer { padding: 1.25rem 1.5rem; border-top: 1px solid var(--border); }
+    .rating-btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; max-width: 600px; margin: 0 auto; }
+    .rating-btn {
+      padding: 0.75rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.8rem;
+      font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+      border: 2px solid var(--border); background: var(--bg-card);
+      cursor: pointer; transition: all var(--transition);
+    }
+    .rating-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+    .rating-btn .emoji { font-size: 1.4rem; }
+    .rating-0:hover { border-color: var(--red); background: rgba(192,57,43,0.1); }
+    .rating-1:hover { border-color: var(--orange); background: rgba(217,119,6,0.1); }
+    .rating-2:hover { border-color: var(--accent); }
+    .rating-3:hover { border-color: var(--green); background: rgba(5,150,105,0.1); }
+
+    /* --- TOPICS --- */
+    .topics-toolbar { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+    .search-input-wrap { position: relative; flex: 1; min-width: 150px; }
+    .search-input-wrap input { padding-left: 2.2rem; }
+    .search-icon { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .filter-chips { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .filter-chip {
+      padding: 0.3rem 0.7rem; border-radius: var(--radius-pill);
+      font-size: 0.78rem; font-weight: 600; border: 1px solid var(--border);
+      background: var(--bg-input); color: var(--text-muted); cursor: pointer;
+      transition: all var(--transition);
+    }
+    .filter-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .topics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; }
+    .topic-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1rem; cursor: pointer;
+      transition: all var(--transition); position: relative;
+    }
+    .topic-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); border-color: var(--accent); }
+    .topic-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .topic-card-title { font-weight: 700; font-size: 0.92rem; line-height: 1.35; }
+    .topic-tags { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.4rem; }
+    .topic-tag { background: var(--bg-input); color: var(--text-muted); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7rem; }
+    .mastery-stars { display: flex; gap: 2px; margin-top: 0.5rem; }
+    .mastery-star { width: 12px; height: 12px; }
+    .due-chip { font-size: 0.72rem; }
+
+    /* --- TOPIC DETAIL PANEL --- */
+    .panel-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 50; display: none; backdrop-filter: blur(2px); }
+    .panel-overlay.open { display: block; }
+    .detail-panel {
+      position: fixed; right: 0; top: 0; bottom: 0; width: min(520px, 100vw);
+      background: var(--bg-card); border-left: 1px solid var(--border);
+      z-index: 51; display: flex; flex-direction: column;
+      box-shadow: -8px 0 32px rgba(0,0,0,0.15);
+      transform: translateX(100%); transition: transform 0.3s ease;
+    }
+    .detail-panel.open { transform: translateX(0); }
+    .panel-topbar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .panel-body { flex: 1; overflow-y: auto; padding: 1.25rem; }
+    .panel-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); display: flex; gap: 0.5rem; }
+
+    /* --- JOURNAL --- */
+    .cal-strip { display: flex; gap: 0.3rem; overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 1.25rem; }
+    .cal-day {
+      min-width: 52px; padding: 0.5rem 0.3rem; border-radius: var(--radius-sm);
+      display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+      cursor: pointer; border: 2px solid transparent; background: var(--bg-input);
+      transition: all var(--transition); flex-shrink: 0;
+    }
+    .cal-day.selected { border-color: var(--accent); background: var(--accent-light); }
+    .cal-day.has-entry::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: block; }
+    .cal-day .cal-dname { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+    .cal-day .cal-dnum { font-size: 0.9rem; font-weight: 700; }
+
+    .mood-selector { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .mood-btn { font-size: 1.5rem; padding: 0.4rem; border-radius: var(--radius-sm); cursor: pointer; border: 2px solid transparent; transition: all var(--transition); }
+    .mood-btn.selected { border-color: var(--accent); background: var(--accent-light); }
+
+    .slider-group { display: flex; align-items: center; gap: 0.75rem; }
+    .slider-group input[type=range] { flex: 1; accent-color: var(--accent); }
+    .slider-val { min-width: 24px; text-align: center; font-weight: 700; color: var(--accent); }
+
+    /* --- ANALYTICS --- */
+    .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 700px) { .analytics-grid { grid-template-columns: 1fr; } }
+    .chart-wrap { height: 220px; position: relative; }
+
+    /* Heatmap */
+    .heatmap-container { overflow-x: auto; }
+    .heatmap-grid { display: grid; grid-template-rows: repeat(7, 14px); grid-auto-flow: column; gap: 3px; width: max-content; }
+    .heat-cell { width: 14px; height: 14px; border-radius: 3px; background: var(--bg-input); }
+    .heat-1 { background: rgba(1,105,111,0.25); }
+    .heat-2 { background: rgba(1,105,111,0.5); }
+    .heat-3 { background: rgba(1,105,111,0.75); }
+    .heat-4 { background: var(--accent); }
+    [data-theme="dark"] .heat-1 { background: rgba(79,152,163,0.2); }
+    [data-theme="dark"] .heat-2 { background: rgba(79,152,163,0.45); }
+    [data-theme="dark"] .heat-3 { background: rgba(79,152,163,0.7); }
+    [data-theme="dark"] .heat-4 { background: var(--accent); }
+
+    /* --- SETTINGS --- */
+    .settings-section { margin-bottom: 1.75rem; }
+    .settings-section h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+    .subject-list { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
+    .subject-item { display: flex; align-items: center; gap: 0.3rem; background: var(--bg-input); border: 1px solid var(--border); padding: 0.3rem 0.6rem; border-radius: var(--radius-pill); font-size: 0.82rem; }
+    .danger-zone { border: 1px solid rgba(192,57,43,0.3); border-radius: var(--radius); padding: 1rem; background: rgba(192,57,43,0.04); }
+
+    /* ═══════════ TOAST ═══════════ */
+    #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 200; display: flex; flex-direction: column; gap: 0.5rem; }
+    .toast {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 0.75rem 1rem;
+      box-shadow: var(--shadow-lg); font-size: 0.875rem; font-weight: 600;
+      display: flex; align-items: center; gap: 0.5rem;
+      animation: toastIn 0.25s ease; max-width: 300px;
+    }
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.error { border-left: 3px solid var(--red); }
+    .toast.xp { border-left: 3px solid var(--accent); }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes toastOut { to { opacity: 0; transform: translateX(20px); } }
+
+    /* FAB */
+    .fab {
+      position: fixed; bottom: 1.5rem; right: 1.5rem; width: 52px; height: 52px;
+      border-radius: 50%; background: var(--accent); color: white;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(1,105,111,0.4); z-index: 40;
+      transition: all var(--transition); cursor: pointer;
+    }
+    .fab:hover { transform: scale(1.08); box-shadow: 0 6px 20px rgba(1,105,111,0.5); }
+    .fab svg { width: 22px; height: 22px; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 60; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); padding: 1rem; }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); width: 100%; max-width: 520px;
+      max-height: 85vh; overflow-y: auto;
+      box-shadow: var(--shadow-lg); animation: modalPop 0.2s ease;
+    }
+    @keyframes modalPop { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; border-bottom: 1px solid var(--border); }
+    .modal-body { padding: 1.25rem; }
+    .modal-footer { padding: 1rem 1.25rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.5rem; }
+
+    /* Review Summary */
+    .review-summary { text-align: center; padding: 2rem 1rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+    .xp-badge { background: var(--accent-light); color: var(--accent); padding: 0.5rem 1.25rem; border-radius: var(--radius-pill); font-size: 1.3rem; font-weight: 700; }
+
+    /* Code Block */
+    .code-block { border-radius: var(--radius-sm); overflow: hidden; margin-top: 0.5rem; }
+    .code-block pre { margin: 0; font-size: 0.83rem; }
+
+    /* Divider */
+    .divider { height: 1px; background: var(--border); margin: 1rem 0; }
+
+    /* Review History */
+    .review-history { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; }
+    .review-row {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 0.6rem; border-radius: var(--radius-sm);
+      background: var(--bg-input); font-size: 0.82rem;
+    }
+
+    /* Toggle Switch */
+    .toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 20px; transition: 0.2s; cursor: pointer; }
+    .toggle-slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+    input:checked + .toggle-slider { background: var(--accent); }
+    input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+    /* Mobile Nav */
+    .mobile-nav { display: none; }
+    @media (max-width: 768px) {
+      .sidebar { display: none !important; }
+      .main { padding-bottom: 4rem; }
+      .mobile-nav {
+        display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+        background: var(--bg-sidebar); border-top: 1px solid var(--border);
+        padding: 0.4rem; z-index: 30; justify-content: space-around;
+      }
+      .mobile-nav-item {
+        display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+        color: var(--text-muted); font-size: 0.65rem; font-weight: 600;
+        padding: 0.4rem 0.6rem; border-radius: var(--radius-sm); cursor: pointer;
+        transition: all var(--transition);
+      }
+      .mobile-nav-item.active { color: var(--accent); }
+      .fab { bottom: 5rem; }
+      .topics-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Level Badge */
+    .level-badge { display: inline-flex; align-items: center; gap: 0.4rem; background: var(--accent-light); color: var(--accent); padding: 0.25rem 0.7rem; border-radius: var(--radius-pill); font-size: 0.78rem; font-weight: 700; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <a href="index.html" class="logo">🧠 FlowDash</a>
+    </div>
+    <nav class="suite-nav">
+<a href="index.html" class="nav-pill">🏠 Home</a>
+<a href="goal-tracker.html" class="nav-pill">🎯 Goals</a>
+<a href="habit-tracker.html" class="nav-pill">🌱 Habits</a>
+<a href="mindvault.html" class="nav-pill active">🧠 Vault</a>
+<a href="decision-coach.html" class="nav-pill">🧭 Decision</a>
+    </nav>
+    <div class="header-right" style="display: flex; align-items: center; gap: 1rem;">
+      <span id="user-display" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);"></span>
+      <button onclick="AuthService.logout()" class="nav-pill" style="border: 1px solid rgba(255,255,255,0.1); cursor: pointer; background: transparent; padding: 0.4rem 0.8rem;">Logout</button>
+    </div>
+  </header>
+
+  <script>
+    // Initialize user display
+    const user = AuthService.getCurrentUser();
+    if (user) {
+      document.getElementById('user-display').innerText = `Welcome, ${user.username}`;
+    }
+  </script>
+
+<div class="app-shell">
+  <!-- SIDEBAR (Desktop) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <span style="font-size:1.3rem">🧠</span>
+      <span class="logo-text">MindVault</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active" data-view="dashboard"><i data-lucide="home"></i> Dashboard</div>
+      <div class="nav-item" data-view="topics"><i data-lucide="layers"></i> All Topics</div>
+      <div class="nav-section-label">Learn</div>
+      <div class="nav-item" id="review-nav-btn"><i data-lucide="zap"></i> Review Session</div>
+      <div class="nav-item" data-view="journal"><i data-lucide="book-open"></i> Daily Journal</div>
+      <div class="nav-section-label">Insights</div>
+      <div class="nav-item" data-view="analytics"><i data-lucide="bar-chart-2"></i> Analytics</div>
+      <div class="nav-item" data-view="settings"><i data-lucide="settings"></i> Settings</div>
+      
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="streak-badge">🔥 <span id="sidebar-streak">0</span> day streak</div>
+      <div class="nav-item" id="theme-toggle"><i data-lucide="moon"></i> Dark Mode</div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-title" id="topbar-title">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <span class="level-badge" id="topbar-level">⚡ Beginner</span>
+        <span class="level-badge" id="topbar-xp">0 XP</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- ===== DASHBOARD VIEW ===== -->
+      <div class="view active" id="view-dashboard">
+
+        <!-- Review Queue Card -->
+        <div class="card review-queue-card" id="review-queue-card">
+          <!-- JS populated -->
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Total Topics</div>
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-sub">across all subjects</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Mastered</div>
+            <div class="stat-value" id="stat-mastered">0</div>
+            <div class="stat-sub">6+ good reviews</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Streak</div>
+            <div class="stat-value" id="stat-streak">0</div>
+            <div class="stat-sub">🔥 days</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Today's XP</div>
+            <div class="stat-value" id="stat-xp-today">0</div>
+            <div class="stat-sub">of daily goal</div>
+          </div>
+        </div>
+
+        <!-- Daily Goal Progress -->
+        <div class="card" style="margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <strong>Daily Goal</strong>
+            <span class="chip chip-accent" id="dash-goal-chip">0/3 topics</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="dash-goal-bar" style="width:0%"></div></div>
+        </div>
+
+        <div class="dash-grid">
+          <!-- Upcoming Reviews -->
+          <div class="card">
+            <div class="card-title" style="margin-bottom:0.75rem;">📅 Upcoming Reviews</div>
+            <div class="mini-cal-row" id="mini-calendar"></div>
+          </div>
+          <!-- Recent Topics -->
+          <div class="card">
+            <div class="card-title" style="margin-bottom:0.75rem;">🕐 Recent Topics</div>
+            <div id="recent-topics-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TOPICS VIEW ===== -->
+      <div class="view" id="view-topics">
+        <div class="topics-toolbar">
+          <div class="search-input-wrap">
+            <i data-lucide="search" class="search-icon" style="width:16px;height:16px;"></i>
+            <input type="text" class="form-input" id="topic-search" placeholder="Search topics, tags, notes…" style="padding-left:2.4rem;">
+          </div>
+          <select class="form-select" id="subject-filter" style="width:auto; min-width:120px;"></select>
+          <select class="form-select" id="sort-select" style="width:auto; min-width:130px;">
+            <option value="due">Sort: Next Due</option>
+            <option value="added">Date Added</option>
+            <option value="difficulty">Difficulty</option>
+            <option value="retention">Retention</option>
+          </select>
+        </div>
+        <div class="filter-chips" id="filter-chips">
+          <div class="filter-chip active" data-filter="all">All</div>
+          <div class="filter-chip" data-filter="due">Due Today</div>
+          <div class="filter-chip" data-filter="overdue">Overdue</div>
+          <div class="filter-chip" data-filter="mastered">Mastered</div>
+          <div class="filter-chip" data-filter="archived">Archived</div>
+        </div>
+        <div class="topics-grid" id="topics-grid"></div>
+      </div>
+
+      <!-- ===== JOURNAL VIEW ===== -->
+      <div class="view" id="view-journal">
+        <div class="cal-strip" id="journal-cal-strip"></div>
+        <div id="journal-form-area"></div>
+      </div>
+
+      <!-- ===== ANALYTICS VIEW ===== -->
+      <div class="view" id="view-analytics">
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="card-title" style="margin-bottom:0.75rem;">📈 Learning Heatmap <span style="font-size:0.75rem; color:var(--text-muted); font-weight:400;">(last 52 weeks)</span></div>
+          <div class="heatmap-container"><div class="heatmap-grid" id="heatmap-grid"></div></div>
+        </div>
+        <div class="analytics-grid">
+          <div class="card"><div class="card-title" style="margin-bottom:0.5rem">Subject Distribution</div><div class="chart-wrap"><canvas id="chart-subject"></canvas></div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:0.5rem">Weekly Performance</div><div class="chart-wrap"><canvas id="chart-weekly"></canvas></div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:0.5rem">Review Forecast (30 days)</div><div class="chart-wrap"><canvas id="chart-forecast"></canvas></div></div>
+          <div class="card"><div class="card-title" style="margin-bottom:0.5rem">Retention by Subject</div><div class="chart-wrap"><canvas id="chart-retention"></canvas></div></div>
+        </div>
+      </div>
+
+      <!-- ===== SETTINGS VIEW ===== -->
+      <div class="view" id="view-settings">
+        <div style="max-width:560px;">
+          <div class="settings-section">
+            <h3>Profile</h3>
+            <div class="form-group">
+              <label class="form-label">Your Name</label>
+              <input type="text" class="form-input" id="set-name" placeholder="e.g. Arpit">
+            </div>
+            <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+              <span class="level-badge" id="set-level-badge">Beginner</span>
+              <span class="level-badge" id="set-xp-badge">0 XP Total</span>
+              <span class="chip chip-accent">🔥 <span id="set-streak">0</span> days</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Daily Goal</h3>
+            <div class="form-group">
+              <label class="form-label">Topics to add per day</label>
+              <input type="number" class="form-input" id="set-goal-topics" min="1" max="20" style="width:100px;">
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Subjects</h3>
+            <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+              <input type="text" class="form-input" id="new-subject-input" placeholder="e.g. DSA" style="flex:1;">
+              <button class="btn btn-primary" onclick="addSubject()">Add</button>
+            </div>
+            <div class="subject-list" id="settings-subjects"></div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Notifications</h3>
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <label class="toggle"><input type="checkbox" id="set-notif"><span class="toggle-slider"></span></label>
+              <span style="font-size:0.875rem;">Daily review reminders</span>
+            </div>
+            <div class="form-group" style="margin-top:0.75rem;">
+              <label class="form-label">Reminder Time</label>
+              <input type="time" class="form-input" id="set-reminder-time" value="19:00" style="width:140px;">
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Data</h3>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+              <button class="btn btn-secondary" onclick="exportJSON()"><i data-lucide="download"></i> Export JSON</button>
+              <button class="btn btn-secondary" onclick="triggerImport()"><i data-lucide="upload"></i> Import JSON</button>
+              <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(this)">
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="danger-zone">
+              <h3 style="color:var(--red); border-color:rgba(192,57,43,0.3);">Danger Zone</h3>
+              <p style="font-size:0.875rem; color:var(--text-muted); margin-bottom:0.75rem;">This will permanently delete all your data and cannot be undone.</p>
+              <button class="btn btn-danger" onclick="clearAllData()"><i data-lucide="trash-2"></i> Clear All Data</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app-shell -->
+
+<!-- REVIEW SESSION (Full Screen Overlay) -->
+<div id="review-view">
+  <div class="review-topbar">
+    <button class="btn btn-secondary" onclick="exitReview()"><i data-lucide="x"></i> Exit</button>
+    <span id="review-progress-text" style="font-weight:600; font-size:0.9rem;"></span>
+    <span></span>
+  </div>
+  <div class="review-progress-bar"><div class="review-progress-fill" id="review-progress-fill"></div></div>
+  <div class="review-body">
+    <div class="flip-card" id="flip-card" onclick="flipCard()">
+      <div class="flip-card-inner">
+        <div class="flip-face flip-front" id="flip-front">
+          <!-- JS populated -->
+        </div>
+        <div class="flip-face flip-back" id="flip-back">
+          <!-- JS populated -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="review-footer">
+    <div id="rating-area" style="display:none;">
+      <p style="text-align:center; font-size:0.82rem; color:var(--text-muted); margin-bottom:0.5rem;">How well did you recall this?</p>
+      <div class="rating-btns">
+        <button class="rating-btn rating-0" onclick="rateCard(0)"><span class="emoji">😰</span><span>Forgot</span></button>
+        <button class="rating-btn rating-1" onclick="rateCard(1)"><span class="emoji">🤔</span><span>Hard</span></button>
+        <button class="rating-btn rating-2" onclick="rateCard(2)"><span class="emoji">👍</span><span>Good</span></button>
+        <button class="rating-btn rating-3" onclick="rateCard(3)"><span class="emoji">🚀</span><span>Easy</span></button>
+      </div>
+    </div>
+    <div id="flip-hint-area" style="text-align:center;">
+      <span class="flip-hint">👆 Tap the card to reveal your notes</span>
+    </div>
+  </div>
+  <div class="review-summary" id="review-summary" style="display:none;">
+    <!-- JS populated -->
+  </div>
+</div>
+
+<!-- FAB: Add Topic -->
+<div class="fab" id="fab-btn" onclick="openAddModal()" title="Add Topic">
+  <i data-lucide="plus" style="color:white; width:22px; height:22px;"></i>
+</div>
+
+<!-- Mobile Nav -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-item active" data-view="dashboard"><i data-lucide="home"></i> Home</div>
+  <div class="mobile-nav-item" data-view="topics"><i data-lucide="layers"></i> Topics</div>
+  <div class="mobile-nav-item" id="mob-review-btn"><i data-lucide="zap"></i> Review</div>
+  <div class="mobile-nav-item" data-view="journal"><i data-lucide="book-open"></i> Journal</div>
+  <div class="mobile-nav-item" data-view="analytics"><i data-lucide="bar-chart-2"></i> Stats</div>
+</nav>
+
+<!-- Add/Edit Topic Modal -->
+<div class="modal-overlay" id="topic-modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <strong id="topic-modal-title">Add Topic</strong>
+      <button class="btn btn-ghost btn-icon" onclick="closeAddModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-topic-id">
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input type="text" class="form-input" id="f-title" placeholder="e.g. Liskov Substitution Principle">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem;">
+        <div class="form-group">
+          <label class="form-label">Subject *</label>
+          <input type="text" class="form-input" id="f-subject" list="subjects-datalist" placeholder="e.g. Java">
+          <datalist id="subjects-datalist"></datalist>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Difficulty (1–5)</label>
+          <input type="number" class="form-input" id="f-difficulty" min="1" max="5" value="3">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags (space or comma separated)</label>
+        <input type="text" class="form-input" id="f-tags" placeholder="#oop #solid #exam">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-textarea" id="f-notes" style="min-height:120px;" placeholder="Key concepts, definitions, formulas…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Code Snippet (optional)</label>
+        <textarea class="form-textarea form-mono" id="f-code" style="font-family:var(--font-mono); min-height:80px;" placeholder="// paste code here"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Source URL (optional)</label>
+        <input type="url" class="form-input" id="f-source" placeholder="https://...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTopic()">Save Topic</button>
+    </div>
+  </div>
+</div>
+
+<!-- Topic Detail Panel -->
+<div class="panel-overlay" id="panel-overlay" onclick="closeTopicPanel()"></div>
+<div class="detail-panel" id="topic-detail-panel">
+  <div class="panel-topbar">
+    <strong id="panel-title" style="font-size:1rem;"></strong>
+    <button class="btn btn-ghost btn-icon" onclick="closeTopicPanel()"><i data-lucide="x"></i></button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+  <div class="panel-footer">
+    <button class="btn btn-primary" id="panel-review-btn">Review Now</button>
+    <button class="btn btn-secondary" id="panel-edit-btn">Edit</button>
+    <button class="btn btn-danger" id="panel-archive-btn">Archive</button>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+//   MINDVAULT — CORE APPLICATION
+// ══════════════════════════════════════════════════
+
+// ── UTILS ──
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => [...document.querySelectorAll(sel)];
+function uuid() { return crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2,12); }
+function getLocalDateStr(d = new Date()) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return getLocalDateStr(d);
+}
+function daysBetween(a, b) {
+  return Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+}
+
+// ── STATE ──
+let state = {
+  topics: [],
+  journals: [],
+  settings: {
+    userName: '',
+    dailyGoal: { addTopics: 3, completeReviews: true },
+    subjects: [],
+    notificationsEnabled: false,
+    dailyReminderTime: '19:00',
+    xpTotal: 0,
+    streakCount: 0,
+    lastActiveDate: '',
+    todayXP: 0,
+    todayXPDate: ''
+  }
+};
+let charts = {};
+let currentView = 'dashboard';
+let reviewQueue = [];
+let reviewIndex = 0;
+let isFlipped = false;
+let sessionXP = 0;
+let sessionRatings = { 0:0, 1:0, 2:0, 3:0 };
+let activeTopicDetailId = null;
+let journalSelectedDate = getLocalDateStr();
+const MINDVAULT_STATE_KEY = 'mindvault_v2';
+
+// ── PERSISTENCE ──
+function save(skipSync = false) { 
+  AuthService.Storage.saveJSON(MINDVAULT_STATE_KEY, state); 
+  if (!skipSync) {
+    AuthService.Drive.sync('vault', state);
+  }
+}
+function load() {
+  const loaded = AuthService.Storage.loadJSON(MINDVAULT_STATE_KEY, null);
+  if (loaded) {
+    state = { ...state, ...loaded };
+    if (!state.settings.subjects) state.settings.subjects = [];
+    if (!state.settings.todayXP) state.settings.todayXP = 0;
+    if (!state.settings.todayXPDate) state.settings.todayXPDate = '';
+  }
+}
+
+// ── SM-2 ALGORITHM ──
+function sm2(topic, rating) {
+  let { interval, easeFactor, consecutiveCorrect } = topic;
+  if (rating === 0) {
+    interval = 1;
+    easeFactor = Math.max(1.3, easeFactor - 0.2);
+    consecutiveCorrect = 0;
+  } else if (rating === 1) {
+    interval = Math.max(1, interval);
+    easeFactor = Math.max(1.3, easeFactor - 0.15);
+    consecutiveCorrect = 0;
+  } else if (rating === 2) {
+    if (interval === 1) interval = 3;
+    else if (interval === 3) interval = 7;
+    else interval = Math.min(365, Math.round(interval * easeFactor));
+    consecutiveCorrect++;
+  } else { // 3 = Easy
+    if (interval === 1) interval = 3;
+    else if (interval === 3) interval = 7;
+    else interval = Math.min(365, Math.round(interval * easeFactor * 1.3));
+    easeFactor = Math.min(3.0, easeFactor + 0.1);
+    consecutiveCorrect++;
+  }
+  const today = getLocalDateStr();
+  const nextDue = addDays(today, interval);
+  const reviewEntry = { date: new Date().toISOString(), rating, intervalAtTime: interval };
+  const totalReviews = topic.reviewHistory.length + 1;
+  const goodReviews = topic.reviewHistory.filter(r => r.rating >= 2).length + (rating >= 2 ? 1 : 0);
+  const retentionScore = Math.round((goodReviews / totalReviews) * 100);
+  const isMastered = consecutiveCorrect >= 6;
+  return {
+    ...topic,
+    interval, easeFactor, consecutiveCorrect,
+    reviewCount: topic.reviewCount + 1,
+    nextDue, lastReviewed: new Date().toISOString(),
+    reviewHistory: [...topic.reviewHistory, reviewEntry],
+    retentionScore, isMastered
+  };
+}
+
+// ── XP SYSTEM ──
+const LEVELS = [
+  { min: 0, title: 'Beginner' }, { min: 100, title: 'Explorer' }, { min: 250, title: 'Learner' },
+  { min: 500, title: 'Practitioner' }, { min: 1000, title: 'Scholar' }, { min: 2000, title: 'Expert' },
+  { min: 3500, title: 'Sage' }, { min: 5000, title: 'Master' }, { min: 7500, title: 'Grandmaster' },
+  { min: 10000, title: 'Legend' }
+];
+function getLevel(xp) {
+  let lv = LEVELS[0];
+  for (let l of LEVELS) { if (xp >= l.min) lv = l; }
+  return lv;
+}
+function earnXP(amount, reason) {
+  const today = getLocalDateStr();
+  if (state.settings.todayXPDate !== today) {
+    state.settings.todayXP = 0;
+    state.settings.todayXPDate = today;
+  }
+  state.settings.xpTotal += amount;
+  state.settings.todayXP += amount;
+  save();
+  toast(`+${amount} XP — ${reason}`, 'xp');
+  updateTopbar();
+}
+function toast(msg, type = 'success', duration = 3000) {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = msg;
+  $('#toast-container').appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'toastOut 0.25s ease forwards';
+    setTimeout(() => el.remove(), 300);
+  }, duration);
+}
+
+// ── STREAK ──
+function checkStreak() {
+  const today = getLocalDateStr();
+  const last = state.settings.lastActiveDate;
+  if (last === today) return;
+  if (last === addDays(today, -1)) {
+    state.settings.streakCount++;
+    // 7-day streak bonus
+    if (state.settings.streakCount % 7 === 0) earnXP(50, '7-Day Streak! 🔥');
+  } else if (last !== today) {
+    state.settings.streakCount = 1;
+  }
+  state.settings.lastActiveDate = today;
+  save();
+}
+
+// ── ROUTING ──
+function navigate(view) {
+  $$('.view').forEach(v => v.classList.remove('active'));
+  $$('.nav-item').forEach(n => n.classList.remove('active'));
+  $$('.mobile-nav-item').forEach(n => n.classList.remove('active'));
+  const el = $(`#view-${view}`);
+  if (el) el.classList.add('active');
+  $$(`[data-view="${view}"]`).forEach(n => n.classList.add('active'));
+  currentView = view;
+  const TITLES = { dashboard:'Dashboard', topics:'All Topics', journal:'Daily Journal', analytics:'Analytics', settings:'Settings' };
+  $('#topbar-title').textContent = TITLES[view] || 'MindVault';
+  if (view === 'dashboard') renderDashboard();
+  if (view === 'topics') renderTopics();
+  if (view === 'journal') renderJournal();
+  if (view === 'analytics') renderAnalytics();
+  if (view === 'settings') renderSettings();
+
+  const fab = $('#fab-btn');
+  fab.style.display = (view === 'journal' || view === 'analytics' || view === 'settings') ? 'none' : 'flex';
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const today = getLocalDateStr();
+  const dueTodayList = state.topics.filter(t => !t.isArchived && !t.isMastered && t.nextDue <= today);
+  const overdue = dueTodayList.filter(t => t.nextDue < today).length;
+  const dueCount = dueTodayList.length;
+
+  // Review queue card
+  const rq = $('#review-queue-card');
+  if (dueCount === 0) {
+    rq.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🎉</div><h3>All caught up!</h3><p>No reviews due. Add more topics to keep learning.</p></div>`;
+  } else {
+    rq.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div class="card-meta">Due for Review</div>
+          <div class="rq-count">${dueCount}</div>
+          <div class="card-meta">topics waiting</div>
+        </div>
+        ${overdue > 0 ? `<span class="chip chip-red">${overdue} overdue</span>` : ''}
+      </div>
+      <div class="rq-actions" style="margin-top:0.75rem;">
+        <button class="btn btn-primary" onclick="startReview()"><i data-lucide="zap"></i> Start Review</button>
+        <button class="btn btn-secondary" onclick="navigate('topics')">View Topics</button>
+      </div>`;
+  }
+  lucide.createIcons({ nodes: [rq] });
+
+  // Stats
+  const todayTopics = state.topics.filter(t => t.dateAdded && t.dateAdded.startsWith(today));
+  $('#stat-total').textContent = state.topics.filter(t=>!t.isArchived).length;
+  $('#stat-mastered').textContent = state.topics.filter(t=>t.isMastered).length;
+  $('#stat-streak').textContent = state.settings.streakCount;
+  if (state.settings.todayXPDate === today) {
+    $('#stat-xp-today').textContent = state.settings.todayXP;
+  } else {
+    $('#stat-xp-today').textContent = 0;
+  }
+
+  // Streak in sidebar
+  const sb = $('#sidebar-streak');
+  if (sb) sb.textContent = state.settings.streakCount;
+
+  // Daily Goal
+  const goal = state.settings.dailyGoal.addTopics || 3;
+  const todayAdded = todayTopics.length;
+  const pct = Math.min(100, Math.round((todayAdded / goal) * 100));
+  $('#dash-goal-chip').textContent = `${todayAdded}/${goal} topics`;
+  $('#dash-goal-bar').style.width = pct + '%';
+
+  // Mini Calendar (next 7 days)
+  const cal = $('#mini-calendar');
+  cal.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(today, i);
+    const count = state.topics.filter(t => !t.isArchived && t.nextDue === d).length;
+    const dd = new Date(d + 'T00:00:00');
+    const isToday = (i === 0);
+    const div = document.createElement('div');
+    div.className = `mini-cal-day${count > 0 ? ' has-items' : ''}${isToday ? ' today' : ''}`;
+    div.innerHTML = `<div class="mini-cal-label">${dd.toLocaleDateString('en-IN',{weekday:'short'})}</div><div class="mini-cal-num">${dd.getDate()}</div>${count > 0 ? `<div class="mini-cal-badge">${count}</div>` : '<div style="height:14px"></div>'}`;
+    cal.appendChild(div);
+  }
+
+  // Recent Topics
+  const rt = $('#recent-topics-list');
+  const recent = [...state.topics].filter(t=>!t.isArchived).sort((a,b) => b.dateAdded.localeCompare(a.dateAdded)).slice(0,5);
+  if (recent.length === 0) {
+    rt.innerHTML = `<p style="color:var(--text-muted); font-size:0.875rem;">No topics yet. Add your first one!</p>`;
+  } else {
+    rt.innerHTML = recent.map(t => {
+      const chip = getDueChip(t);
+      return `<div style="display:flex; align-items:center; gap:0.5rem; padding:0.4rem 0; border-bottom:1px solid var(--border); cursor:pointer;" onclick="openTopicDetail('${t.id}')">
+        <span style="flex:1; font-size:0.875rem; font-weight:600;">${t.title}</span>
+        ${chip}
+      </div>`;
+    }).join('');
+  }
+  lucide.createIcons();
+}
+
+function getDueChip(t) {
+  const today = getLocalDateStr();
+  if (t.isMastered) return `<span class="chip chip-green">★ Mastered</span>`;
+  if (t.isArchived) return `<span class="chip chip-muted">Archived</span>`;
+  if (t.nextDue < today) return `<span class="chip chip-red">Overdue</span>`;
+  if (t.nextDue === today) return `<span class="chip chip-orange">Due today</span>`;
+  const d = daysBetween(today, t.nextDue);
+  return `<span class="chip chip-accent">in ${d}d</span>`;
+}
+
+// ── ADD/EDIT TOPIC MODAL ──
+function openAddModal(editId = null) {
+  $('#topic-modal-overlay').classList.add('open');
+  const subjects = state.settings.subjects;
+  $('#subjects-datalist').innerHTML = subjects.map(s=>`<option value="${s}"></option>`).join('');
+  $('#edit-topic-id').value = '';
+  $('#topic-modal-title').textContent = 'Add Topic';
+  ['f-title','f-notes','f-code','f-source'].forEach(id => $(('#'+id)).value = '');
+  $('#f-difficulty').value = 3;
+  $('#f-tags').value = '';
+
+  if (editId) {
+    const t = state.topics.find(x=>x.id===editId);
+    if(!t) return;
+    $('#edit-topic-id').value = t.id;
+    $('#topic-modal-title').textContent = 'Edit Topic';
+    $('#f-title').value = t.title;
+    $('#f-subject').value = t.subject;
+    $('#f-difficulty').value = t.difficulty;
+    $('#f-tags').value = t.tags.join(' ');
+    $('#f-notes').value = t.notes;
+    $('#f-code').value = t.codeSnippet || '';
+    $('#f-source').value = t.sourceUrl || '';
+  }
+}
+function closeAddModal() { $('#topic-modal-overlay').classList.remove('open'); }
+
+function saveTopic() {
+  const title = $('#f-title').value.trim();
+  if (!title) { toast('Title is required', 'error'); return; }
+  const editId = $('#edit-topic-id').value;
+  const subject = $('#f-subject').value.trim();
+  if (!subject) { toast('Subject is required', 'error'); return; }
+  
+  // Register new subject if not exists
+  if (!state.settings.subjects.includes(subject)) {
+    state.settings.subjects.push(subject);
+  }
+  const difficulty = parseInt($('#f-difficulty').value) || 3;
+  const rawTags = $('#f-tags').value;
+  const tags = rawTags.split(/[\s,]+/).filter(Boolean).map(t => t.startsWith('#') ? t : '#'+t);
+  const notes = $('#f-notes').value.trim();
+  const codeSnippet = $('#f-code').value.trim() || null;
+  const sourceUrl = $('#f-source').value.trim() || null;
+  const today = getLocalDateStr();
+
+  if (editId) {
+    const idx = state.topics.findIndex(x=>x.id===editId);
+    if (idx >= 0) {
+      state.topics[idx] = { ...state.topics[idx], title, subject, difficulty, tags, notes, codeSnippet, sourceUrl };
+      save();
+      toast('Topic updated!', 'success');
+    }
+  } else {
+    const newTopic = {
+      id: uuid(), title, subject, tags, notes, codeSnippet, sourceUrl, difficulty,
+      dateAdded: new Date().toISOString(),
+      interval: 1, easeFactor: 2.5, reviewCount: 0, consecutiveCorrect: 0,
+      nextDue: addDays(today, 1), lastReviewed: null,
+      reviewHistory: [], isMastered: false, isArchived: false, retentionScore: 0
+    };
+    state.topics.push(newTopic);
+    // Journal: track topic added
+    let je = state.journals.find(j=>j.date===today);
+    if (je) { je.topicsAddedToday.push(newTopic.id); }
+    else {
+      state.journals.push({ id:uuid(), date:today, energyLevel:3, focusLevel:3, wins:'', struggles:'', freeNotes:'', tomorrowGoals:'', topicsAddedToday:[newTopic.id], reviewsCompletedToday:0, totalReviewsDueToday:0, mood:'okay' });
+    }
+    save();
+    earnXP(10, 'New topic added');
+    checkStreak();
+    toast('Topic added! 📚', 'success');
+  }
+  closeAddModal();
+  if (currentView === 'dashboard') renderDashboard();
+  if (currentView === 'topics') renderTopics();
+  lucide.createIcons();
+}
+
+// ── TOPICS VIEW ──
+let topicFilterState = { filter: 'all', search: '', subject: 'all', sort: 'due' };
+
+function renderTopics() {
+  const subjectFilter = $('#subject-filter');
+  const subjects = ['all', ...state.settings.subjects];
+  subjectFilter.innerHTML = subjects.map(s => `<option value="${s}">${s==='all'?'All Subjects':s}</option>`).join('');
+  subjectFilter.value = topicFilterState.subject;
+  filterTopics();
+}
+
+function filterTopics() {
+  const today = getLocalDateStr();
+  let list = state.topics.filter(t => {
+    const { filter, search, subject } = topicFilterState;
+    if (filter === 'archived') { if (!t.isArchived) return false; }
+    else { if (t.isArchived) return false; }
+    if (filter === 'due') { if (!(t.nextDue === today && !t.isMastered)) return false; }
+    if (filter === 'overdue') { if (!(t.nextDue < today && !t.isMastered)) return false; }
+    if (filter === 'mastered') { if (!t.isMastered) return false; }
+    if (subject !== 'all' && t.subject !== subject) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return t.title.toLowerCase().includes(q) || t.notes.toLowerCase().includes(q) || t.tags.some(tg => tg.toLowerCase().includes(q));
+    }
+    return true;
+  });
+
+  const sort = topicFilterState.sort;
+  if (sort === 'due') list.sort((a,b) => a.nextDue.localeCompare(b.nextDue));
+  if (sort === 'added') list.sort((a,b) => b.dateAdded.localeCompare(a.dateAdded));
+  if (sort === 'difficulty') list.sort((a,b) => b.difficulty - a.difficulty);
+  if (sort === 'retention') list.sort((a,b) => b.retentionScore - a.retentionScore);
+
+  const grid = $('#topics-grid');
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-state-icon">🔍</div><h3>No topics found</h3><p>Try a different filter or search term.</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(t => {
+    const chip = getDueChip(t);
+    const stars = Array.from({length:6}, (_,i) => `<svg class="mastery-star" viewBox="0 0 24 24" fill="${i < t.consecutiveCorrect ? 'var(--accent)' : 'var(--border)'}" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`).join('');
+    return `<div class="topic-card" onclick="openTopicDetail('${t.id}')">
+      <div class="topic-card-header">
+        <div class="topic-card-title">${t.title}</div>
+        ${chip}
+      </div>
+      <div style="display:flex; gap:0.4rem; align-items:center;">
+        <span class="chip chip-muted" style="font-size:0.72rem;">${t.subject}</span>
+        ${t.difficulty ? `<span class="chip chip-muted" style="font-size:0.72rem;">Diff: ${'●'.repeat(t.difficulty)}${'○'.repeat(5-t.difficulty)}</span>` : ''}
+      </div>
+      <div class="topic-tags">${t.tags.map(tg=>`<span class="topic-tag">${tg}</span>`).join('')}</div>
+      <div class="mastery-stars" style="margin-top:0.5rem;">${stars}</div>
+    </div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+// ── TOPIC DETAIL PANEL ──
+function openTopicDetail(topicId) {
+  const t = state.topics.find(x=>x.id===topicId);
+  if (!t) return;
+  activeTopicDetailId = topicId;
+  $('#panel-title').textContent = t.title;
+  const body = $('#panel-body');
+  const today = getLocalDateStr();
+  const chip = getDueChip(t);
+  const stars = Array.from({length:6}, (_,i) => `<svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="${i < t.consecutiveCorrect ? 'var(--accent)':'var(--border)'}" stroke="none"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`).join('');
+  const rHistory = [...t.reviewHistory].reverse().slice(0,8);
+  const ratingLabel = ['Forgot','Hard','Good','Easy'];
+  const ratingColor = ['var(--red)','var(--orange)','var(--accent)','var(--green)'];
+
+  body.innerHTML = `
+    <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+      <span class="chip chip-muted">${t.subject}</span>
+      ${chip}
+      <span class="chip chip-muted">Retention: ${t.retentionScore}%</span>
+    </div>
+    <div style="display:flex; gap:4px; margin-bottom:0.5rem;">${stars}</div>
+    <div class="chip chip-muted" style="margin-bottom:0.75rem; font-size:0.72rem;">Reviewed ${t.reviewCount}× — Next in ${t.nextDue >= today ? daysBetween(today, t.nextDue) : 0} days</div>
+    ${t.tags.length ? `<div class="topic-tags" style="margin-bottom:0.75rem;">${t.tags.map(tg=>`<span class="topic-tag">${tg}</span>`).join('')}</div>` : ''}
+    <div class="divider"></div>
+    <div style="font-size:0.875rem; line-height:1.7; white-space:pre-wrap; margin-bottom:0.75rem;">${t.notes || '<em style="color:var(--text-muted)">No notes added.</em>'}</div>
+    ${t.codeSnippet ? `<div class="code-block"><pre><code class="language-java">${t.codeSnippet.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre></div>` : ''}
+    ${t.sourceUrl ? `<a href="${t.sourceUrl}" target="_blank" style="display:inline-flex; align-items:center; gap:0.3rem; color:var(--accent); font-size:0.82rem; margin-top:0.5rem;">🔗 Source</a>` : ''}
+    <div class="divider"></div>
+    <div style="font-weight:700; font-size:0.82rem; margin-bottom:0.5rem; color:var(--text-muted);">REVIEW HISTORY</div>
+    ${rHistory.length === 0 ? '<p style="color:var(--text-muted); font-size:0.82rem;">No reviews yet.</p>' : `
+      <div class="review-history">${rHistory.map(r => `
+        <div class="review-row">
+          <span style="color:${ratingColor[r.rating]}; font-weight:700;">${ratingLabel[r.rating]}</span>
+          <span style="flex:1; color:var(--text-muted);">${new Date(r.date).toLocaleDateString('en-IN')}</span>
+          <span class="chip chip-muted">${r.intervalAtTime}d interval</span>
+        </div>`).join('')}
+      </div>`}
+  `;
+
+  $('#panel-review-btn').onclick = () => { closeTopicPanel(); startSingleReview(topicId); };
+  $('#panel-edit-btn').onclick = () => { closeTopicPanel(); openAddModal(topicId); };
+  $('#panel-archive-btn').onclick = () => { archiveTopic(topicId); closeTopicPanel(); };
+  if (t.isArchived) $('#panel-archive-btn').textContent = 'Unarchive';
+
+  $('#panel-overlay').classList.add('open');
+  $('#topic-detail-panel').classList.add('open');
+  if (window.Prism) Prism.highlightAll();
+  lucide.createIcons();
+}
+function closeTopicPanel() {
+  $('#panel-overlay').classList.remove('open');
+  $('#topic-detail-panel').classList.remove('open');
+}
+function archiveTopic(id) {
+  const t = state.topics.find(x=>x.id===id);
+  if (t) { t.isArchived = !t.isArchived; save(); toast(t.isArchived ? 'Topic archived' : 'Topic unarchived', 'success'); renderTopics(); }
+}
+
+// ── REVIEW SESSION ──
+function startReview() {
+  const today = getLocalDateStr();
+  reviewQueue = state.topics.filter(t => !t.isArchived && !t.isMastered && t.nextDue <= today);
+  if (reviewQueue.length === 0) { toast('No topics due today!', 'success'); return; }
+  reviewQueue = [...reviewQueue].sort((a,b) => a.nextDue.localeCompare(b.nextDue));
+  initiateReviewSession();
+}
+function startSingleReview(id) {
+  const t = state.topics.find(x=>x.id===id);
+  if (!t) return;
+  reviewQueue = [t];
+  initiateReviewSession();
+}
+function initiateReviewSession() {
+  reviewIndex = 0; isFlipped = false; sessionXP = 0; sessionRatings = {0:0,1:0,2:0,3:0};
+  const rv = $('#review-view');
+  rv.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  $('#review-summary').style.display = 'none';
+  loadReviewCard();
+}
+function loadReviewCard() {
+  const t = reviewQueue[reviewIndex];
+  isFlipped = false;
+  const card = $('#flip-card');
+  card.classList.remove('flipped');
+  const total = reviewQueue.length;
+
+  $('#review-progress-text').textContent = `${reviewIndex + 1} of ${total}`;
+  $('#review-progress-fill').style.width = `${((reviewIndex) / total) * 100}%`;
+
+  $('#flip-front').innerHTML = `
+    <span class="chip chip-accent" style="align-self:flex-start;">${t.subject}</span>
+    <div style="font-size:1.4rem; font-weight:700; text-align:center; line-height:1.4;">${t.title}</div>
+    ${t.tags.length ? `<div class="topic-tags" style="justify-content:center;">${t.tags.map(tg=>`<span class="topic-tag">${tg}</span>`).join('')}</div>` : ''}
+    <div class="flip-hint" style="align-self:flex-end;">👆 Tap to reveal notes</div>
+  `;
+
+  $('#flip-back').innerHTML = `
+    <div style="font-weight:700; margin-bottom:0.5rem; font-size:0.9rem; color:var(--accent);">${t.title}</div>
+    <div class="review-notes">${t.notes || 'No notes for this topic.'}</div>
+    ${t.codeSnippet ? `<div class="code-block" style="margin-top:0.75rem;"><pre><code class="language-java">${t.codeSnippet.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre></div>` : ''}
+    ${t.sourceUrl ? `<a href="${t.sourceUrl}" target="_blank" style="color:var(--accent); font-size:0.8rem; margin-top:0.5rem; display:block;">🔗 Source</a>` : ''}
+  `;
+
+  $('#rating-area').style.display = 'none';
+  $('#flip-hint-area').style.display = 'block';
+  if (window.Prism) setTimeout(() => Prism.highlightAll(), 100);
+}
+function flipCard() {
+  if (isFlipped) return;
+  isFlipped = true;
+  $('#flip-card').classList.add('flipped');
+  setTimeout(() => {
+    $('#rating-area').style.display = 'block';
+    $('#flip-hint-area').style.display = 'none';
+    if (window.Prism) Prism.highlightAll();
+  }, 250);
+}
+function rateCard(rating) {
+  const t = reviewQueue[reviewIndex];
+  const updated = sm2(t, rating);
+  const tIdx = state.topics.findIndex(x=>x.id===t.id);
+  if (tIdx >= 0) state.topics[tIdx] = updated;
+  reviewQueue[reviewIndex] = updated;
+
+  const xpAmount = rating === 3 ? 10 : 5;
+  sessionXP += xpAmount;
+  sessionRatings[rating]++;
+  state.settings.xpTotal += xpAmount;
+  if (state.settings.todayXPDate === getLocalDateStr()) state.settings.todayXP += xpAmount;
+  else { state.settings.todayXP = xpAmount; state.settings.todayXPDate = getLocalDateStr(); }
+
+  // Journal update
+  const today = getLocalDateStr();
+  let je = state.journals.find(j=>j.date===today);
+  if (je) { je.reviewsCompletedToday++; }
+
+  toast(`Next review: in ${updated.interval} day${updated.interval===1?'':'s'}`, 'success', 2000);
+  save();
+  reviewIndex++;
+
+  if (reviewIndex >= reviewQueue.length) {
+    showReviewSummary();
+  } else {
+    setTimeout(loadReviewCard, 400);
+  }
+}
+function showReviewSummary() {
+  const today = getLocalDateStr();
+  const due = state.topics.filter(t=>!t.isArchived && !t.isMastered && t.nextDue <= today).length;
+  if (due === 0) earnXP(25, 'All reviews complete! 🎉');
+
+  $('#review-progress-fill').style.width = '100%';
+  const labels = ['Forgot','Hard','Good','Easy'];
+  const colors = ['🔴','🟡','🟢','🚀'];
+  const sr = $('#review-summary');
+  sr.innerHTML = `
+    <div style="font-size:2rem;">🎉</div>
+    <div style="font-size:1.25rem; font-weight:700;">Session Complete!</div>
+    <div class="xp-badge">+${sessionXP} XP earned</div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:0.5rem; width:100%; max-width:360px;">
+      ${[0,1,2,3].map(r => `<div style="text-align:center; background:var(--bg-input); border-radius:8px; padding:0.75rem;">
+        <div style="font-size:1.3rem;">${colors[r]}</div>
+        <div style="font-weight:700;">${sessionRatings[r]}</div>
+        <div style="font-size:0.72rem; color:var(--text-muted);">${labels[r]}</div>
+      </div>`).join('')}
+    </div>
+    <p style="color:var(--text-muted); font-size:0.875rem; max-width:280px; text-align:center;">${getMotivation()}</p>
+    <button class="btn btn-primary" onclick="exitReview()">Back to Dashboard</button>
+  `;
+  sr.style.display = 'flex';
+  document.querySelector('.review-body').style.display = 'none';
+  document.querySelector('.review-footer').style.display = 'none';
+  confetti({ particleCount: 100, spread: 70 });
+  updateTopbar();
+}
+function getMotivation() {
+  const msgs = [
+    "Every review is a vote for your future self. Keep going!",
+    "Spaced repetition is the closest thing to a learning superpower.",
+    "Consistency beats intensity. You're building something great.",
+    "Your future self will thank you for today's effort.",
+    "The best students don't study harder — they study smarter. That's you."
+  ];
+  return msgs[Math.floor(Math.random()*msgs.length)];
+}
+function exitReview() {
+  $('#review-view').classList.remove('active');
+  document.body.style.overflow = '';
+  document.querySelector('.review-body').style.display = 'flex';
+  document.querySelector('.review-footer').style.display = 'block';
+  navigate('dashboard');
+}
+
+// ── JOURNAL ──
+function renderJournal() {
+  const cal = $('#journal-cal-strip');
+  cal.innerHTML = '';
+  const today = getLocalDateStr();
+  for (let i = 6; i >= 0; i--) {
+    const d = addDays(today, -i);
+    const hasEntry = state.journals.some(j => j.date === d);
+    const dd = new Date(d + 'T00:00:00');
+    const div = document.createElement('div');
+    div.className = `cal-day${hasEntry?' has-entry':''}${d===journalSelectedDate?' selected':''}`;
+    div.innerHTML = `<div class="cal-dname">${dd.toLocaleDateString('en-IN',{weekday:'short'})}</div><div class="cal-dnum">${dd.getDate()}</div>`;
+    div.onclick = () => { journalSelectedDate = d; renderJournal(); };
+    cal.appendChild(div);
+  }
+  renderJournalForm(journalSelectedDate);
+}
+
+function renderJournalForm(date) {
+  const isToday = (date === getLocalDateStr());
+  const existing = state.journals.find(j => j.date === date) || {};
+  const fa = $('#journal-form-area');
+  const moods = [['great','😄'],['good','🙂'],['okay','😐'],['low','😔']];
+  const topicsToday = (existing.topicsAddedToday || []).map(id => state.topics.find(t=>t.id===id)).filter(Boolean);
+
+  fa.innerHTML = `
+    <div class="card" style="margin-bottom:1rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <strong>${new Date(date+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</strong>
+        ${!isToday ? '<span class="chip chip-muted">Past Entry — Read only</span>' : ''}
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Mood</label>
+        <div class="mood-selector" id="mood-sel">
+          ${moods.map(([mv,me]) => `<button class="mood-btn${(existing.mood||'okay')===mv?' selected':''}" data-mood="${mv}" onclick="selectMood('${mv}', ${isToday})">${me}</button>`).join('')}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Energy Level: <span id="energy-val">${existing.energyLevel||3}</span></label>
+        <div class="slider-group">
+          <span style="font-size:0.8rem;color:var(--text-muted)">Low</span>
+          <input type="range" min="1" max="5" value="${existing.energyLevel||3}" ${!isToday?'disabled':''} oninput="$('#energy-val').textContent=this.value; journal_energy=this.value;">
+          <span style="font-size:0.8rem;color:var(--text-muted)">High</span>
+          <span class="slider-val">${existing.energyLevel||3}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Focus Level: <span id="focus-val">${existing.focusLevel||3}</span></label>
+        <div class="slider-group">
+          <span style="font-size:0.8rem;color:var(--text-muted)">Low</span>
+          <input type="range" min="1" max="5" value="${existing.focusLevel||3}" ${!isToday?'disabled':''} oninput="$('#focus-val').textContent=this.value; journal_focus=this.value;">
+          <span style="font-size:0.8rem;color:var(--text-muted)">High</span>
+          <span class="slider-val">${existing.focusLevel||3}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">✅ Wins today</label>
+        <textarea class="form-textarea" id="j-wins" ${!isToday?'readonly':''} placeholder="What went well? What did you understand?">${existing.wins||''}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🤔 Got stuck on</label>
+        <textarea class="form-textarea" id="j-struggles" ${!isToday?'readonly':''} placeholder="What confused you? What needs more review?">${existing.struggles||''}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📝 Free notes</label>
+        <textarea class="form-textarea" id="j-free" style="min-height:100px;" ${!isToday?'readonly':''} placeholder="Anything else on your mind…">${existing.freeNotes||''}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🌅 Goals for tomorrow</label>
+        <textarea class="form-textarea" id="j-tomorrow" ${!isToday?'readonly':''} placeholder="What do you want to accomplish tomorrow?">${existing.tomorrowGoals||''}</textarea>
+      </div>
+
+      ${isToday ? `<button class="btn btn-primary" style="width:100%;" onclick="saveJournal()">Save Journal Entry</button>` : ''}
+    </div>
+
+    ${topicsToday.length > 0 ? `
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-title" style="margin-bottom:0.75rem;">📚 Topics Added Today</div>
+        ${topicsToday.map(t=>`<div style="padding:0.4rem 0; border-bottom:1px solid var(--border); font-size:0.875rem;"><strong>${t.title}</strong> <span class="chip chip-muted" style="margin-left:0.3rem;">${t.subject}</span></div>`).join('')}
+      </div>
+    ` : ''}
+
+    ${existing.reviewsCompletedToday > 0 ? `
+      <div class="card">
+        <div class="card-title">📊 Review Summary</div>
+        <p style="color:var(--text-muted); margin-top:0.25rem; font-size:0.875rem;">${existing.reviewsCompletedToday} review${existing.reviewsCompletedToday === 1 ? '' : 's'} completed</p>
+      </div>
+    ` : ''}
+  `;
+
+  window.journal_energy = existing.energyLevel || 3;
+  window.journal_focus = existing.focusLevel || 3;
+  window.journal_mood = existing.mood || 'okay';
+}
+
+window.selectMood = function(mood, isToday) {
+  if (!isToday) return;
+  window.journal_mood = mood;
+  $$('.mood-btn').forEach(b => b.classList.toggle('selected', b.dataset.mood === mood));
+};
+
+function saveJournal() {
+  const today = getLocalDateStr();
+  let je = state.journals.find(j=>j.date===today);
+  const data = {
+    wins: $('#j-wins').value,
+    struggles: $('#j-struggles').value,
+    freeNotes: $('#j-free').value,
+    tomorrowGoals: $('#j-tomorrow').value,
+    energyLevel: parseInt(window.journal_energy)||3,
+    focusLevel: parseInt(window.journal_focus)||3,
+    mood: window.journal_mood || 'okay'
+  };
+  if (je) { Object.assign(je, data); }
+  else {
+    state.journals.push({ id:uuid(), date:today, ...data, topicsAddedToday:[], reviewsCompletedToday:0, totalReviewsDueToday:0 });
+    earnXP(15, 'Daily journal entry! 📖');
+  }
+  save();
+  toast('Journal saved!', 'success');
+  checkStreak();
+}
+
+// ── ANALYTICS ──
+function renderAnalytics() {
+  // Heatmap (52 weeks)
+  const heatDiv = $('#heatmap-grid');
+  heatDiv.innerHTML = '';
+  const today = getLocalDateStr();
+  const dayMap = {};
+  state.topics.forEach(t => {
+    const d = t.dateAdded ? t.dateAdded.split('T')[0] : null;
+    if (d) dayMap[d] = (dayMap[d]||0) + 1;
+  });
+  state.journals.forEach(j => {
+    if (j.reviewsCompletedToday) dayMap[j.date] = (dayMap[j.date]||0) + j.reviewsCompletedToday;
+  });
+
+  for (let w = 51; w >= 0; w--) {
+    for (let d = 6; d >= 0; d--) {
+      const total = w * 7 + d;
+      const dateD = new Date(today + 'T00:00:00');
+      dateD.setDate(dateD.getDate() - total);
+      const ds = getLocalDateStr(dateD);
+      const count = dayMap[ds] || 0;
+      const cell = document.createElement('div');
+      cell.className = 'heat-cell' + (count===0?'':count<=2?' heat-1':count<=4?' heat-2':count<=7?' heat-3':' heat-4');
+      cell.title = `${ds}: ${count} activities`;
+      heatDiv.appendChild(cell);
+    }
+  }
+
+  // Destroy old charts
+  if (charts.subject) charts.subject.destroy();
+  if (charts.weekly) charts.weekly.destroy();
+  if (charts.forecast) charts.forecast.destroy();
+  if (charts.retention) charts.retention.destroy();
+
+  // Subject Distribution
+  const subs = {};
+  state.topics.filter(t=>!t.isArchived).forEach(t => { subs[t.subject] = (subs[t.subject]||0)+1; });
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  const chartDefaults = { color: isDark ? '#f0ede8' : '#1c1a17' };
+  Chart.defaults.color = chartDefaults.color;
+
+  const subCtx = $('#chart-subject');
+  if (subCtx && Object.keys(subs).length) {
+    charts.subject = new Chart(subCtx, {
+      type: 'doughnut',
+      data: { labels: Object.keys(subs), datasets: [{ data: Object.values(subs), backgroundColor: ['#01696f','#02878e','#4f98a3','#6ab5c0','#8fd3db','#b3e8ed'], borderWidth: 0 }] },
+      options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { font: { size: 11 } } } } }
+    });
+  }
+
+  // Weekly Performance (last 8 weeks)
+  const weekLabels = [];
+  const wData = { 0:[], 1:[], 2:[], 3:[] };
+  for (let w = 7; w >= 0; w--) {
+    const wStart = addDays(today, -w*7 - 6);
+    weekLabels.push('W'+(8-w));
+    [0,1,2,3].forEach(r => {
+      const count = state.topics.reduce((n, t) => {
+        return n + t.reviewHistory.filter(h => h.date >= wStart+'T00:00:00' && h.rating===r && h.date <= addDays(today, -(w*7))+'T23:59:59').length;
+      }, 0);
+      wData[r].push(count);
+    });
+  }
+  const wCtx = $('#chart-weekly');
+  if (wCtx) {
+    charts.weekly = new Chart(wCtx, {
+      type: 'bar',
+      data: { labels: weekLabels, datasets: [
+        { label:'Forgot', data: wData[0], backgroundColor:'rgba(192,57,43,0.7)', stack:'s' },
+        { label:'Hard', data: wData[1], backgroundColor:'rgba(217,119,6,0.7)', stack:'s' },
+        { label:'Good', data: wData[2], backgroundColor:'rgba(1,105,111,0.7)', stack:'s' },
+        { label:'Easy', data: wData[3], backgroundColor:'rgba(5,150,105,0.7)', stack:'s' },
+      ]},
+      options: { maintainAspectRatio: false, scales: { x:{stacked:true}, y:{stacked:true,beginAtZero:true} }, plugins:{legend:{labels:{font:{size:11}}}} }
+    });
+  }
+
+  // Forecast (next 30 days)
+  const fLabels = []; const fData = [];
+  for (let i = 0; i < 30; i++) {
+    const d = addDays(today, i);
+    fLabels.push(i===0?'Today':`+${i}d`);
+    fData.push(state.topics.filter(t=>!t.isArchived && !t.isMastered && t.nextDue===d).length);
+  }
+  const fCtx = $('#chart-forecast');
+  if (fCtx) {
+    charts.forecast = new Chart(fCtx, {
+      type: 'line',
+      data: { labels: fLabels, datasets: [{ label:'Due', data: fData, borderColor:'var(--accent)', backgroundColor:'var(--accent-light)', tension:0.3, fill:true, pointRadius:3 }] },
+      options: { maintainAspectRatio: false, scales: { y:{beginAtZero:true} }, plugins:{legend:{display:false}} }
+    });
+  }
+
+  // Retention by Subject
+  const retBySub = {};
+  state.settings.subjects.forEach(s => {
+    const ts = state.topics.filter(t=>t.subject===s && t.reviewCount>0);
+    retBySub[s] = ts.length ? Math.round(ts.reduce((a,t)=>a+t.retentionScore,0)/ts.length) : 0;
+  });
+  const rCtx = $('#chart-retention');
+  if (rCtx && Object.keys(retBySub).length) {
+    charts.retention = new Chart(rCtx, {
+      type: 'bar',
+      data: { labels: Object.keys(retBySub), datasets: [{ label:'Retention %', data: Object.values(retBySub), backgroundColor:'rgba(79,152,163,0.7)', borderRadius:6 }] },
+      options: { maintainAspectRatio: false, indexAxis:'y', scales:{x:{beginAtZero:true,max:100}}, plugins:{legend:{display:false}} }
+    });
+  }
+}
+
+// ── SETTINGS ──
+function renderSettings() {
+  const s = state.settings;
+  $('#set-name').value = s.userName;
+  $('#set-goal-topics').value = s.dailyGoal.addTopics;
+  $('#set-notif').checked = s.notificationsEnabled;
+  $('#set-reminder-time').value = s.dailyReminderTime;
+  const lv = getLevel(s.xpTotal);
+  $('#set-level-badge').textContent = '⚡ ' + lv.title;
+  $('#set-xp-badge').textContent = s.xpTotal + ' XP Total';
+  $('#set-streak').textContent = s.streakCount;
+  renderSubjectList();
+}
+function renderSubjectList() {
+  const list = $('#settings-subjects');
+  list.innerHTML = state.settings.subjects.map(s => `
+    <div class="subject-item">
+      ${s}
+      <button class="btn btn-ghost btn-icon" style="padding:2px 4px;" onclick="removeSubject('${s}')"><i data-lucide="x" style="width:12px;height:12px;"></i></button>
+    </div>`).join('');
+  lucide.createIcons({ nodes: [list] });
+}
+window.addSubject = function() {
+  const v = $('#new-subject-input').value.trim();
+  if (!v || state.settings.subjects.includes(v)) return;
+  state.settings.subjects.push(v);
+  $('#new-subject-input').value = '';
+  save(); renderSubjectList();
+};
+window.removeSubject = function(s) {
+  state.settings.subjects = state.settings.subjects.filter(x=>x!==s);
+  save(); renderSubjectList();
+};
+
+function saveSettings() {
+  state.settings.userName = $('#set-name').value;
+  state.settings.dailyGoal.addTopics = parseInt($('#set-goal-topics').value)||3;
+  state.settings.notificationsEnabled = $('#set-notif').checked;
+  state.settings.dailyReminderTime = $('#set-reminder-time').value;
+  save();
+}
+
+// ── TOPBAR ──
+function updateTopbar() {
+  const lv = getLevel(state.settings.xpTotal);
+  $('#topbar-level').textContent = '⚡ ' + lv.title;
+  $('#topbar-xp').textContent = state.settings.xpTotal + ' XP';
+  const sb = $('#sidebar-streak');
+  if (sb) sb.textContent = state.settings.streakCount;
+}
+
+// ── THEME ──
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.dataset.theme === 'dark';
+  html.dataset.theme = isDark ? 'light' : 'dark';
+  localStorage.setItem('mv_theme', html.dataset.theme);
+  $('#theme-toggle').innerHTML = `<i data-lucide="${isDark?'moon':'sun'}"></i> ${isDark?'Dark':'Light'} Mode`;
+  lucide.createIcons({ nodes: [$('#theme-toggle')] });
+}
+
+// ── EXPORT / IMPORT ──
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `mindvault-backup-${getLocalDateStr()}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('Exported successfully!', 'success');
+}
+function triggerImport() { $('#import-file').click(); }
+window.importJSON = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.topics && data.settings) {
+        state = data; save(); navigate('dashboard');
+        toast('Data imported!', 'success');
+      } else { toast('Invalid backup file', 'error'); }
+    } catch { toast('Could not parse file', 'error'); }
+  };
+  reader.readAsText(file);
+};
+
+function clearAllData() {
+  if (confirm('⚠️ This will permanently delete ALL your topics, journals, and settings. Are you absolutely sure?')) {
+    AuthService.Storage.clearJSON(MINDVAULT_STATE_KEY);
+    location.reload();
+  }
+}
+
+// ── NOTIFICATIONS ──
+function checkNotification() {
+  const today = getLocalDateStr();
+  const lastNotif = localStorage.getItem('mv_notif_date');
+  if (lastNotif === today) return;
+  const now = new Date();
+  const [h, m] = (state.settings.dailyReminderTime || '19:00').split(':').map(Number);
+  if (now.getHours() !== h || now.getMinutes() !== m) return;
+  const due = state.topics.filter(t => !t.isArchived && !t.isMastered && t.nextDue <= today).length;
+  if (due > 0 && state.settings.notificationsEnabled && Notification.permission === 'granted') {
+    new Notification('🧠 MindVault', { body: `You have ${due} topics due for review today.`, icon: '' });
+    localStorage.setItem('mv_notif_date', today);
+  }
+}
+
+// ── INIT ──
+async function init() {
+  load();
+  const savedTheme = localStorage.getItem('mv_theme') || 'dark';
+  document.documentElement.dataset.theme = savedTheme;
+  $('#theme-toggle').innerHTML = `<i data-lucide="${savedTheme==='dark'?'moon':'sun'}"></i> ${savedTheme==='dark'?'Dark':'Light'} Mode`;
+
+  // Event: Nav items
+  $$('[data-view]').forEach(el => {
+    el.addEventListener('click', () => navigate(el.dataset.view));
+  });
+
+  // Event: Review
+  $('#review-nav-btn').addEventListener('click', startReview);
+  const mobR = $('#mob-review-btn');
+  if (mobR) mobR.addEventListener('click', startReview);
+
+  // Event: Theme Toggle
+  $('#theme-toggle').addEventListener('click', toggleTheme);
+
+  // Events: Topic Filters
+  $('#topic-search').addEventListener('input', e => { topicFilterState.search = e.target.value; filterTopics(); });
+  $('#subject-filter').addEventListener('change', e => { topicFilterState.subject = e.target.value; filterTopics(); });
+  $('#sort-select').addEventListener('change', e => { topicFilterState.sort = e.target.value; filterTopics(); });
+  $$('.filter-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      $$('.filter-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      topicFilterState.filter = chip.dataset.filter;
+      filterTopics();
+    });
+  });
+
+  // Event: Settings auto-save
+  ['set-name','set-goal-topics','set-notif','set-reminder-time'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', saveSettings);
+  });
+
+  // Notifications permission
+  if ('Notification' in window && state.settings.notificationsEnabled) {
+    Notification.requestPermission();
+  }
+
+  checkStreak();
+  updateTopbar();
+  navigate('dashboard');
+  lucide.createIcons();
+
+  // ── Drive Initialize and Sync ──
+  await AuthService.Drive.init();
+  if (AuthService.Drive.driveFileId) {
+    console.log("Drive Syncing for MindVault...");
+    const remoteData = await AuthService.Drive.sync('vault', state);
+    if (remoteData) {
+      state = remoteData;
+      save(true); // Save local without triggering another sync
+      navigate('dashboard'); // Refresh view
+    }
+  }
+
+  // Periodic checks
+  setInterval(checkNotification, 60000);
+}
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

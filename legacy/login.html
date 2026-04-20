@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | FlowDash Productivity</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <style>
+        :root {
+            --bg-main: #171614;
+            --bg-card: rgba(31, 30, 27, 0.8);
+            --text-main: #f0ede8;
+            --text-muted: #8c8880;
+            --accent-primary: #4f98a3;
+            --accent-secondary: #8b5cf6;
+            --error: #ef4444;
+            --success: #10b981;
+            --font-body: 'Satoshi', sans-serif;
+            --font-display: 'Boska', serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-main);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 152, 163, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated background elements */
+        .blob {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: -1;
+            border-radius: 50%;
+            animation: move 20s infinite alternate;
+        }
+
+        @keyframes move {
+            from { transform: translate(-10%, -10%); }
+            to { transform: translate(10%, 10%); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            perspective: 1000px;
+            z-index: 10;
+        }
+
+        .auth-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            padding: 2.5rem;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 0 15px rgba(79, 152, 163, 0.4));
+        }
+
+        .logo-text {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-main) 30%, var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .form-subtitle {
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.25rem;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            margin-left: 0.5rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.85rem 1.2rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-family: var(--font-body);
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 4px rgba(79, 152, 163, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 12px;
+            border: none;
+            font-family: var(--font-body);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: white;
+            box-shadow: 0 10px 20px -5px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px -5px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .toggle-text {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .toggle-link {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .toggle-link:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: var(--error);
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            display: none;
+            padding: 0.5rem;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Success screen overlay */
+        #success-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-main);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .success-tick {
+            font-size: 4rem;
+            color: var(--success);
+            margin-bottom: 1rem;
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="blob"></div>
+
+    <div class="container">
+        <div class="auth-card" id="authCard">
+            <div class="logo-section">
+                <img src="logo.png" alt="FlowDash Logo" class="logo-img" onerror="this.src='https://api.dicebear.com/7.x/shapes/svg?seed=FlowDash'">
+                <div class="logo-text">FlowDash</div>
+            </div>
+
+            <div id="loginForm">
+                <h2 class="form-title">Welcome Back</h2>
+                <p class="form-subtitle">Master your focus, achieve your dreams.</p>
+                
+                <div id="loginError" class="error-message"></div>
+
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="loginEmail" placeholder="you@example.com" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                </div>
+
+                <button class="btn btn-primary" onclick="handleLogin()">Sign In</button>
+
+                <div style="margin: 1.5rem 0; display: flex; align-items: center; gap: 1rem;">
+                    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">OR</span>
+                    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                </div>
+
+                <!-- Google Sign-In Button -->
+                <div id="g_id_onload"
+                    data-client_id="216540498622-2ccjhuedqhpkelaea8nv2suaicps07ov.apps.googleusercontent.com"
+                    data-callback="handleGoogleResponse"
+                    data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                    data-type="standard"
+                    data-shape="pill"
+                    data-theme="filled_black"
+                    data-text="signin_with"
+                    data-size="large"
+                    data-logo_alignment="left"
+                    style="display: flex; justify-content: center;">
+                </div>
+
+                <p class="toggle-text">
+                    New here? <span class="toggle-link" onclick="toggleForm('signup')">Create an account</span>
+                </p>
+            </div>
+
+            <div id="signupForm" style="display: none;">
+                <h2 class="form-title">Get Started</h2>
+                <p class="form-subtitle">Your journey to peak productivity starts here.</p>
+
+                <div id="signupError" class="error-message"></div>
+
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signupName" placeholder="Arpit Pandey" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="signupEmail" placeholder="you@example.com" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="••••••••" required>
+                </div>
+
+                <button class="btn btn-primary" onclick="handleSignUp()">Create Account</button>
+
+                <div style="margin: 1.5rem 0; display: flex; align-items: center; gap: 1rem;">
+                    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">OR</span>
+                    <div style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></div>
+                </div>
+
+                <!-- Google Sign-In Button (Signup) -->
+                <div class="g_id_signin"
+                    data-type="standard"
+                    data-shape="pill"
+                    data-theme="filled_black"
+                    data-text="signup_with"
+                    data-size="large"
+                    data-logo_alignment="left"
+                    style="display: flex; justify-content: center;">
+                </div>
+
+                <p class="toggle-text">
+                    Already have an account? <span class="toggle-link" onclick="toggleForm('login')">Sign In</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div id="success-overlay">
+        <div class="success-tick">✦</div>
+        <h2 class="form-title">Redirecting to Dashboard...</h2>
+    </div>
+
+    <!-- Inject AuthService -->
+    <script src="auth.js"></script>
+    <script>
+        // Form Toggling Logic
+        function toggleForm(type) {
+            const card = document.getElementById('authCard');
+            const login = document.getElementById('loginForm');
+            const signup = document.getElementById('signupForm');
+
+            // Slide animation effect
+            card.style.transform = 'rotateY(10deg)';
+            setTimeout(() => {
+                if (type === 'signup') {
+                    login.style.display = 'none';
+                    signup.style.display = 'block';
+                } else {
+                    login.style.display = 'block';
+                    signup.style.display = 'none';
+                }
+                card.style.transform = 'rotateY(0deg)';
+            }, 300);
+        }
+
+        // Action Handlers
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorEl = document.getElementById('loginError');
+
+            try {
+                AuthService.login(email, password);
+                showSuccess();
+            } catch (err) {
+                errorEl.innerText = err.message;
+                errorEl.style.display = 'block';
+            }
+        }
+
+        async function handleSignUp() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const errorEl = document.getElementById('signupError');
+
+            if (!name || !email || !password) {
+                errorEl.innerText = "All fields are required.";
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                AuthService.signUp(name, email, password);
+                showSuccess();
+            } catch (err) {
+                errorEl.innerText = err.message;
+                errorEl.style.display = 'block';
+            }
+        }
+
+        // Google Authentication Handlers
+        async function handleGoogleResponse(response) {
+            const payload = decodeJwtResponse(response.credential);
+            console.log("Google Login Payload:", payload);
+            
+            try {
+                AuthService.loginWithGoogle(payload);
+            } catch (err) {
+                console.error("Google Auth local error:", err);
+                alert("Failed to establish session: " + err.message);
+                return;
+            }
+
+            showSuccess();
+
+            // Keep Drive setup running in the background so the app opens even if
+            // the consent flow is delayed or the browser navigation happens fast.
+            AuthService.Drive.authorize().catch((err) => {
+                console.warn("Google Drive setup finished with an issue:", err);
+            });
+        }
+
+        function decodeJwtResponse(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            return JSON.parse(jsonPayload);
+        }
+
+        function showSuccess() {
+            document.getElementById('success-overlay').style.display = 'flex';
+            setTimeout(() => {
+                window.location.href = new URL('index.html', window.location.href).href;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

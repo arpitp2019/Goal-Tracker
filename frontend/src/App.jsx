@@ -750,7 +750,7 @@ function LoginPage({ onSignedIn, bootError, setBootError }) {
         <div className="divider">or</div>
 
         <a className="button secondary full" href="/oauth2/authorization/google">
-          Continue with Google
+          {mode === 'register' ? 'Sign up with Google' : 'Continue with Google'}
         </a>
 
         {(error || bootError) && <div className="notice error">{error || bootError}</div>}

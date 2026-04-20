@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Decision Coach | FlowDash</title>
+  <script src="auth.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #171614;
+      --bg-surface: #141312;
+      --bg-card: #1f1e1b;
+      --bg-card-soft: rgba(31, 30, 27, 0.82);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(245, 158, 11, 0.24);
+      --text-main: #f0ede8;
+      --text-muted: #9a958c;
+      --accent: #f59e0b;
+      --accent-2: #f97316;
+      --accent-3: #c2410c;
+      --good: #10b981;
+      --danger: #ef4444;
+      --font-body: 'Satoshi', sans-serif;
+      --font-display: 'Boska', serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --shadow: 0 1px 4px rgba(0,0,0,0.28), 0 10px 35px rgba(0,0,0,0.38);
+      --shadow-soft: 0 1px 3px rgba(0,0,0,0.16), 0 6px 18px rgba(0,0,0,0.2);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-main);
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(245, 158, 11, 0.10) 0%, transparent 28%),
+        radial-gradient(circle at 88% 82%, rgba(249, 115, 22, 0.08) 0%, transparent 26%),
+        radial-gradient(circle at 70% 20%, rgba(255, 255, 255, 0.03) 0%, transparent 24%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button, input, textarea, select { font: inherit; }
+    button { border: none; background: none; color: inherit; cursor: pointer; }
+
+    header {
+      height: 72px;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: rgba(20, 19, 18, 0.96);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      min-width: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      color: var(--accent);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.45rem;
+      white-space: nowrap;
+    }
+
+    .suite-nav {
+      display: flex;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .nav-pill {
+      padding: 0.42rem 1rem;
+      border-radius: 999px;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.85rem;
+      transition: all 0.18s ease;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .nav-pill:hover {
+      color: var(--text-main);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .nav-pill.active {
+      color: #1e1200;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 8px 18px rgba(245, 158, 11, 0.22);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    #user-display {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .logout-btn {
+      padding: 0.42rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-main);
+      background: rgba(255,255,255,0.03);
+      font-weight: 700;
+      transition: all 0.18s ease;
+    }
+
+    .logout-btn:hover { background: rgba(255,255,255,0.06); }
+
+    .app-shell {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 320px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1.25rem;
+      min-height: 0;
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #1e1200;
+      box-shadow: 0 12px 24px rgba(245, 158, 11, 0.18);
+      font-size: 1.1rem;
+      font-weight: 900;
+    }
+
+    .brand-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .brand-subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .sidebar-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-height: 0;
+    }
+
+    .section-label {
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+    }
+
+    .thread-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+      min-height: 0;
+      max-height: 36vh;
+    }
+
+    .thread-item {
+      padding: 0.85rem 0.9rem;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .thread-item:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(245, 158, 11, 0.15);
+    }
+
+    .thread-item.active {
+      background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.35);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+    }
+
+    .thread-title {
+      font-weight: 800;
+      font-size: 0.96rem;
+      line-height: 1.35;
+      margin-bottom: 0.35rem;
+    }
+
+    .thread-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.18rem 0.5rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.05);
+      font-weight: 700;
+    }
+
+    .empty-threads {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      padding: 0.85rem;
+      border-radius: 14px;
+      border: 1px dashed rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .settings-card {
+      margin-top: auto;
+      padding: 1rem;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .field label {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      background: rgba(0,0,0,0.22);
+      color: var(--text-main);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 0.75rem 0.85rem;
+      outline: none;
+      transition: all 0.18s ease;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: rgba(245, 158, 11, 0.45);
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.10);
+    }
+
+    .relay-status {
+      padding: 0.85rem;
+      border-radius: 14px;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.16);
+      color: var(--text-main);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .mini-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .mini-btn {
+      padding: 0.65rem 0.95rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-main);
+      font-weight: 700;
+      transition: all 0.18s ease;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    .mini-btn:hover {
+      background: rgba(255,255,255,0.06);
+      transform: translateY(-1px);
+    }
+
+    .main {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 1.5rem 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      opacity: 0.8;
+    }
+
+    .hero {
+      padding: 1.35rem 1.35rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .eyebrow {
+      color: var(--accent);
+      text-transform: uppercase;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      font-weight: 800;
+      margin-bottom: 0.45rem;
+    }
+
+    .thread-heading {
+      font-family: var(--font-display);
+      font-size: clamp(1.7rem, 2.8vw, 2.8rem);
+      line-height: 1.05;
+      margin-bottom: 0.45rem;
+    }
+
+    .thread-desc {
+      color: var(--text-muted);
+      max-width: 840px;
+      line-height: 1.55;
+      font-size: 1rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      color: #ffd48a;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .hero-actions-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.72rem 1rem;
+      border-radius: 14px;
+      font-weight: 800;
+      transition: all 0.18s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #1e1200;
+      box-shadow: 0 10px 24px rgba(245, 158, 11, 0.18);
+    }
+
+    .btn-primary:hover { transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.03);
+      color: var(--text-main);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.06);
+      transform: translateY(-1px);
+    }
+
+    .chat-card,
+    .analysis-card {
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      line-height: 1.1;
+      margin-bottom: 0.35rem;
+    }
+
+    .section-subtitle {
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 760px;
+    }
+
+    .chat-messages {
+      max-height: 340px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      padding-right: 0.15rem;
+    }
+
+    .message {
+      max-width: 82%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .message.user { align-self: flex-end; }
+    .message.assistant { align-self: flex-start; }
+
+    .message-label {
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 0.7rem;
+      font-weight: 800;
+    }
+
+    .message-bubble {
+      padding: 0.9rem 1rem;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .message.user .message-bubble {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.98), rgba(249, 115, 22, 0.94));
+      color: #1d1200;
+      border-color: rgba(255,255,255,0.06);
+    }
+
+    .message.assistant .message-bubble {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .message-meta {
+      color: var(--text-muted);
+      font-size: 0.76rem;
+    }
+
+    .empty-chat {
+      padding: 1rem;
+      border-radius: 18px;
+      border: 1px dashed rgba(255,255,255,0.13);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .prompt-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.85rem;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.52rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-main);
+      font-weight: 700;
+      font-size: 0.84rem;
+      transition: all 0.18s ease;
+    }
+
+    .chip:hover {
+      background: rgba(255,255,255,0.06);
+      transform: translateY(-1px);
+    }
+
+    .composer {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .composer textarea {
+      flex: 1;
+      min-width: 280px;
+      min-height: 116px;
+      max-height: 240px;
+      resize: vertical;
+      border-radius: 18px;
+      padding: 1rem 1rem 1rem 1rem;
+      background: rgba(0,0,0,0.22);
+      color: var(--text-main);
+      border: 1px solid rgba(255,255,255,0.08);
+      outline: none;
+      line-height: 1.55;
+    }
+
+    .composer textarea:focus {
+      border-color: rgba(245, 158, 11, 0.42);
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.10);
+    }
+
+    .composer-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      min-width: 190px;
+      flex: 0 1 190px;
+    }
+
+    .analysis-tabs {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 0.68rem 0.95rem;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-muted);
+      font-weight: 800;
+      transition: all 0.18s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .tab-btn.active {
+      color: #1d1200;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 10px 18px rgba(245, 158, 11, 0.18);
+      border-color: transparent;
+    }
+
+    .panel-shell {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px;
+      padding: 1rem;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 0.85rem;
+    }
+
+    .panel-title {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      line-height: 1.15;
+      margin-bottom: 0.25rem;
+    }
+
+    .panel-hint {
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .panel-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      background: rgba(245, 158, 11, 0.10);
+      border: 1px solid rgba(245, 158, 11, 0.18);
+      color: #ffd48a;
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .panel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .panel-block {
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 0.9rem;
+      min-height: 100%;
+    }
+
+    .block-title {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+      color: var(--text-muted);
+      margin-bottom: 0.55rem;
+    }
+
+    .block-copy {
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .bullet-list li {
+      padding: 0.72rem 0.82rem;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      line-height: 1.5;
+    }
+
+    .model-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 0.9rem;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .model-name {
+      font-weight: 900;
+      color: #ffd48a;
+    }
+
+    .memo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .memo-block {
+      padding: 0.95rem;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .memo-block strong {
+      display: block;
+      margin-bottom: 0.35rem;
+      color: #ffd48a;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .confidence-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .empty-panel {
+      padding: 1rem;
+      border-radius: 16px;
+      border: 1px dashed rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.02);
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .loading-state {
+      opacity: 0.72;
+      font-style: italic;
+    }
+
+    @media (max-width: 1180px) {
+      .app-shell {
+        flex-direction: column;
+        overflow: auto;
+      }
+
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .thread-list {
+        max-height: 230px;
+      }
+    }
+
+    @media (max-width: 840px) {
+      header {
+        height: auto;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+      }
+
+      .app-shell {
+        height: auto;
+        min-height: calc(100vh - 72px);
+      }
+
+      .main {
+        padding: 1rem;
+      }
+
+      .hero-top,
+      .section-heading {
+        flex-direction: column;
+      }
+
+      .hero-actions {
+        align-items: flex-start;
+      }
+
+      .composer {
+        flex-direction: column;
+      }
+
+      .composer-actions {
+        width: 100%;
+        min-width: 0;
+        flex: 1;
+        flex-direction: row;
+      }
+
+      .btn {
+        flex: 1;
+      }
+
+      .message {
+        max-width: 94%;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .suite-nav {
+        justify-content: flex-start;
+      }
+
+      .nav-pill {
+        padding: 0.35rem 0.75rem;
+      }
+
+      .sidebar {
+        padding: 1rem;
+      }
+
+      .hero,
+      .chat-card,
+      .analysis-card {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <a href="index.html" class="logo">🧭 FlowDash</a>
+    </div>
+    <nav class="suite-nav">
+      <a href="index.html" class="nav-pill">🏠 Home</a>
+      <a href="goal-tracker.html" class="nav-pill">🎯 Goals</a>
+      <a href="habit-tracker.html" class="nav-pill">🌱 Habits</a>
+      <a href="mindvault.html" class="nav-pill">🧠 Vault</a>
+      <a href="decision-coach.html" class="nav-pill active">🧭 Decision</a>
+    </nav>
+    <div class="header-right">
+      <span id="user-display"></span>
+      <button onclick="AuthService.logout()" class="logout-btn">🚪 Logout</button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-mark">🧭</div>
+        <div class="brand-copy">
+          <div class="brand-title">Decision Coach</div>
+          <div class="brand-subtitle">Chat with frameworks from <em>The Decision Book</em>, plus first principles, inversion, and second order thinking.</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-label">Threads</div>
+        <div id="thread-list" class="thread-list"></div>
+        <button id="new-thread-btn" class="mini-btn">＋ New decision</button>
+      </div>
+
+      <div class="settings-card">
+        <div class="section-label">Model Settings</div>
+        <div class="field">
+          <label for="provider-select">Provider</label>
+          <select id="provider-select"></select>
+        </div>
+        <div class="field">
+          <label for="model-input">Model</label>
+          <input id="model-input" type="text" autocomplete="off" placeholder="gpt-4o-mini">
+        </div>
+        <div class="field">
+          <label for="endpoint-input">Relay endpoint</label>
+          <input id="endpoint-input" type="text" autocomplete="off" placeholder="/api/decision-chat">
+        </div>
+        <div class="mini-actions">
+          <button id="reset-settings-btn" class="mini-btn" type="button">Reset defaults</button>
+          <button id="rename-thread-btn" class="mini-btn" type="button">Rename thread</button>
+        </div>
+        <div id="relay-status" class="relay-status">Connecting to the relay…</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="card hero">
+        <div class="hero-top">
+          <div>
+            <div class="eyebrow">Decision Thread</div>
+            <h1 id="thread-heading" class="thread-heading">New decision</h1>
+            <p id="thread-desc" class="thread-desc">Describe the choice you are facing. The coach will update the live framework tabs after every message and finish with a memo that captures the recommendation, tradeoffs, risks, and next action.</p>
+          </div>
+          <div class="hero-actions">
+            <span id="status-pill" class="status-pill">Ready</span>
+            <div class="hero-actions-row">
+              <button id="refresh-memo-btn" class="btn btn-ghost" type="button">Refresh memo</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card chat-card">
+        <div class="section-heading">
+          <div>
+            <div class="section-title">Chat First</div>
+            <div class="section-subtitle">Ask the coach what to do, what you may be missing, and what would happen if you chose the other path. The model selection is stored per thread, so you can swap models without changing the UI.</div>
+          </div>
+        </div>
+
+        <div id="chat-messages" class="chat-messages"></div>
+
+        <form id="composer" class="composer">
+          <textarea id="message-input" placeholder="I’m deciding between…"></textarea>
+          <div class="composer-actions">
+            <button id="send-btn" type="submit" class="btn btn-primary">Analyze decision</button>
+            <button id="starter-btn" type="button" class="btn btn-ghost">Use starter prompt</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card analysis-card">
+        <div class="section-heading">
+          <div>
+            <div class="section-title">Thinking Tabs</div>
+            <div class="section-subtitle">Switch between the lenses while the thread stays persistent. Each tab is updated from the same analysis payload so the advice stays coherent across frameworks.</div>
+          </div>
+        </div>
+
+        <div id="analysis-tabs" class="analysis-tabs"></div>
+        <div id="analysis-panel" class="panel-shell"></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const DECISION_STATE_KEY = 'decisioncoach_state';
+    const DECISION_API_DEFAULT = '/api/decision-chat';
+    const DECISION_DEFAULTS = {
+      settings: {
+        provider: '',
+        model: '',
+        endpoint: DECISION_API_DEFAULT
+      },
+      activeThreadId: null,
+      activeTab: 'firstPrinciples',
+      threads: []
+    };
+
+    const PROVIDER_OPTIONS = [
+      { key: 'openai', label: 'OpenAI' },
+      { key: 'deepseek', label: 'DeepSeek' },
+      { key: 'minimax', label: 'Minimax' },
+      { key: 'anthropic', label: 'Claude / Anthropic' },
+      { key: 'mock', label: 'Demo mode' }
+    ];
+
+    const TABS = [
+      { id: 'firstPrinciples', label: 'First Principles', hint: 'Facts, assumptions, and tests' },
+      { id: 'inversion', label: 'Inversion', hint: 'How this could fail' },
+      { id: 'secondOrder', label: 'Second Order', hint: 'Downstream effects' },
+      { id: 'decisionModels', label: 'Book Models', hint: 'Relevant frameworks' },
+      { id: 'synthesis', label: 'Synthesis', hint: 'Recommendation and next step' }
+    ];
+
+    const EMPTY_ANALYSIS = () => ({
+      firstPrinciples: {
+        headline: 'Waiting for the first decision prompt.',
+        coreFacts: [],
+        assumptions: [],
+        questions: [],
+        answer: 'Send a prompt to see a first-principles breakdown.'
+      },
+      inversion: {
+        headline: 'Inversion will show the failure modes.',
+        failureModes: [],
+        guardrails: [],
+        answer: 'The inversion tab will help you see what to avoid.'
+      },
+      secondOrder: {
+        headline: 'Second order effects will appear here.',
+        immediateEffects: [],
+        secondOrderEffects: [],
+        answer: 'This view will show the effects that happen after the obvious first move.'
+      },
+      decisionModels: {
+        headline: 'Relevant models from The Decision Book.',
+        models: [],
+        answer: 'The coach will choose the most relevant book models once the decision is clear.'
+      },
+      synthesis: {
+        headline: 'A final recommendation will appear here.',
+        recommendation: 'Your memo will summarize the choice, the tradeoffs, the risks, and the next action.',
+        tradeoffs: [],
+        risks: [],
+        nextAction: 'Describe the decision so the synthesis can generate a concrete next step.',
+        confidence: 'medium'
+      }
+    });
+
+    const DEFAULT_THREADED_SETTINGS = {
+      provider: '',
+      model: '',
+      endpoint: DECISION_API_DEFAULT
+    };
+
+    let relayConfig = {
+      defaultProvider: 'mock',
+      defaultModel: 'flowdash-mock',
+      demoMode: true,
+      providers: PROVIDER_OPTIONS
+    };
+
+    let state = normalizeState(AuthService.Storage.loadJSON(DECISION_STATE_KEY, deepClone(DECISION_DEFAULTS)));
+    let activeTab = state.activeTab || 'firstPrinciples';
+    let isSubmitting = false;
+
+    const el = {
+      userDisplay: document.getElementById('user-display'),
+      threadList: document.getElementById('thread-list'),
+      threadHeading: document.getElementById('thread-heading'),
+      threadDesc: document.getElementById('thread-desc'),
+      statusPill: document.getElementById('status-pill'),
+      relayStatus: document.getElementById('relay-status'),
+      providerSelect: document.getElementById('provider-select'),
+      modelInput: document.getElementById('model-input'),
+      endpointInput: document.getElementById('endpoint-input'),
+      resetSettingsBtn: document.getElementById('reset-settings-btn'),
+      renameThreadBtn: document.getElementById('rename-thread-btn'),
+      newThreadBtn: document.getElementById('new-thread-btn'),
+      refreshMemoBtn: document.getElementById('refresh-memo-btn'),
+      chatMessages: document.getElementById('chat-messages'),
+      composer: document.getElementById('composer'),
+      messageInput: document.getElementById('message-input'),
+      sendBtn: document.getElementById('send-btn'),
+      starterBtn: document.getElementById('starter-btn'),
+      analysisTabs: document.getElementById('analysis-tabs'),
+      analysisPanel: document.getElementById('analysis-panel')
+    };
+
+    function uid(prefix = 'id') {
+      return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[char]));
+    }
+
+    function formatRelativeTime(iso) {
+      if (!iso) return 'just now';
+      const time = new Date(iso).getTime();
+      const diff = Date.now() - time;
+      if (!Number.isFinite(diff) || diff < 0) return 'just now';
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 1) return 'just now';
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    }
+
+    function truncate(text, maxLength = 72) {
+      const clean = String(text || '').replace(/\s+/g, ' ').trim();
+      if (clean.length <= maxLength) return clean;
+      return `${clean.slice(0, Math.max(0, maxLength - 1)).trim()}…`;
+    }
+
+    function buildThreadTitle(text) {
+      const clean = String(text || '').replace(/\s+/g, ' ').trim();
+      if (!clean) return 'New decision';
+      const words = clean.split(' ').slice(0, 8).join(' ');
+      return truncate(words, 54);
+    }
+
+    function deepClone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function normalizeState(rawState) {
+      const merged = {
+        ...deepClone(DECISION_DEFAULTS),
+        ...(rawState && typeof rawState === 'object' ? rawState : {})
+      };
+
+      merged.settings = {
+        ...DEFAULT_THREADED_SETTINGS,
+        ...(merged.settings && typeof merged.settings === 'object' ? merged.settings : {})
+      };
+
+      merged.activeTab = TABS.some((tab) => tab.id === merged.activeTab) ? merged.activeTab : 'firstPrinciples';
+      merged.threads = Array.isArray(merged.threads)
+        ? merged.threads.map((thread) => normalizeThread(thread))
+        : [];
+
+      if (merged.threads.length === 0) {
+        merged.threads.push(createThread('New decision', merged.settings));
+        merged.activeThreadId = merged.threads[0].id;
+      }
+
+      if (!merged.activeThreadId || !merged.threads.some((thread) => thread.id === merged.activeThreadId)) {
+        merged.activeThreadId = merged.threads[0].id;
+      }
+
+      return merged;
+    }
+
+    function normalizeThread(thread) {
+      const createdAt = thread && thread.createdAt ? thread.createdAt : new Date().toISOString();
+      const updatedAt = thread && thread.updatedAt ? thread.updatedAt : createdAt;
+      const settings = {
+        ...DEFAULT_THREADED_SETTINGS,
+        ...(thread && typeof thread.settings === 'object' ? thread.settings : {})
+      };
+
+      return {
+        id: thread && thread.id ? thread.id : uid('thread'),
+        title: thread && thread.title ? String(thread.title) : 'New decision',
+        createdAt,
+        updatedAt,
+        summary: thread && thread.summary ? String(thread.summary) : '',
+        focusTab: TABS.some((tab) => tab.id === thread?.focusTab) ? thread.focusTab : 'firstPrinciples',
+        status: thread && thread.status ? String(thread.status) : 'idle',
+        settings,
+        analysis: normalizeAnalysis(thread && thread.analysis),
+        messages: Array.isArray(thread && thread.messages)
+          ? thread.messages.map((message) => ({
+              id: message && message.id ? message.id : uid('msg'),
+              role: message && message.role === 'assistant' ? 'assistant' : 'user',
+              content: String(message && message.content ? message.content : ''),
+              createdAt: message && message.createdAt ? message.createdAt : new Date().toISOString()
+            }))
+          : []
+      };
+    }
+
+    function normalizeAnalysis(raw) {
+      const base = EMPTY_ANALYSIS();
+      if (!raw || typeof raw !== 'object') return base;
+      return {
+        firstPrinciples: {
+          headline: String(raw.firstPrinciples?.headline || base.firstPrinciples.headline),
+          coreFacts: normalizeList(raw.firstPrinciples?.coreFacts),
+          assumptions: normalizeList(raw.firstPrinciples?.assumptions),
+          questions: normalizeList(raw.firstPrinciples?.questions),
+          answer: String(raw.firstPrinciples?.answer || base.firstPrinciples.answer)
+        },
+        inversion: {
+          headline: String(raw.inversion?.headline || base.inversion.headline),
+          failureModes: normalizeList(raw.inversion?.failureModes),
+          guardrails: normalizeList(raw.inversion?.guardrails),
+          answer: String(raw.inversion?.answer || base.inversion.answer)
+        },
+        secondOrder: {
+          headline: String(raw.secondOrder?.headline || base.secondOrder.headline),
+          immediateEffects: normalizeList(raw.secondOrder?.immediateEffects),
+          secondOrderEffects: normalizeList(raw.secondOrder?.secondOrderEffects),
+          answer: String(raw.secondOrder?.answer || base.secondOrder.answer)
+        },
+        decisionModels: {
+          headline: String(raw.decisionModels?.headline || base.decisionModels.headline),
+          models: Array.isArray(raw.decisionModels?.models)
+            ? raw.decisionModels.models.map((model) => ({
+                name: String(model && model.name ? model.name : '').trim(),
+                whyItFits: String(model && (model.whyItFits || model.why || '')).trim(),
+                howToUse: String(model && (model.howToUse || model.how || '')).trim()
+              })).filter((model) => model.name)
+            : [],
+          answer: String(raw.decisionModels?.answer || base.decisionModels.answer)
+        },
+        synthesis: {
+          headline: String(raw.synthesis?.headline || base.synthesis.headline),
+          recommendation: String(raw.synthesis?.recommendation || base.synthesis.recommendation),
+          tradeoffs: normalizeList(raw.synthesis?.tradeoffs),
+          risks: normalizeList(raw.synthesis?.risks),
+          nextAction: String(raw.synthesis?.nextAction || base.synthesis.nextAction),
+          confidence: String(raw.synthesis?.confidence || base.synthesis.confidence || 'medium')
+        }
+      };
+    }
+
+    function normalizeList(value) {
+      if (Array.isArray(value)) {
+        return value.map((item) => String(item).trim()).filter(Boolean);
+      }
+      if (typeof value === 'string' && value.trim()) {
+        return [value.trim()];
+      }
+      return [];
+    }
+
+    function getActiveThread() {
+      const found = state.threads.find((thread) => thread.id === state.activeThreadId);
+      return found || state.threads[0];
+    }
+
+    function saveState(syncToDrive = true) {
+      state = normalizeState(state);
+      AuthService.Storage.saveJSON(DECISION_STATE_KEY, state);
+      if (syncToDrive) {
+        AuthService.Drive.sync('decision', state).catch((err) => {
+          console.warn('Decision sync failed:', err);
+        });
+      }
+    }
+
+    function setStatus(text) {
+      el.statusPill.textContent = text;
+    }
+
+    function setRelayStatus(text, tone = 'neutral') {
+      el.relayStatus.textContent = text;
+      el.relayStatus.style.borderColor = tone === 'warning'
+        ? 'rgba(245, 158, 11, 0.24)'
+        : tone === 'error'
+          ? 'rgba(239, 68, 68, 0.24)'
+          : 'rgba(245, 158, 11, 0.16)';
+    }
+
+    function persistThreadSettings(thread) {
+      thread.settings = {
+        ...DEFAULT_THREADED_SETTINGS,
+        provider: el.providerSelect.value || relayConfig.defaultProvider || 'mock',
+        model: el.modelInput.value.trim() || relayConfig.defaultModel || '',
+        endpoint: el.endpointInput.value.trim() || DECISION_API_DEFAULT
+      };
+      state.settings = { ...thread.settings };
+      thread.updatedAt = new Date().toISOString();
+      saveState(true);
+    }
+
+    function hydrateSettingsFromConfig() {
+      const currentThread = getActiveThread();
+      const resolvedProvider = currentThread?.settings?.provider || state.settings.provider || relayConfig.defaultProvider || 'mock';
+      const resolvedModel = currentThread?.settings?.model || state.settings.model || relayConfig.defaultModel || '';
+      const resolvedEndpoint = currentThread?.settings?.endpoint || state.settings.endpoint || DECISION_API_DEFAULT;
+
+      state.settings = {
+        provider: resolvedProvider,
+        model: resolvedModel,
+        endpoint: resolvedEndpoint
+      };
+
+      if (currentThread) {
+        currentThread.settings = { ...state.settings };
+      }
+    }
+
+    function renderProviderOptions() {
+      const providers = (relayConfig.providers && relayConfig.providers.length > 0)
+        ? relayConfig.providers
+        : PROVIDER_OPTIONS;
+
+      el.providerSelect.innerHTML = providers.map((provider) => (
+        `<option value="${escapeHtml(provider.key)}">${escapeHtml(provider.label)}</option>`
+      )).join('');
+
+      const providerKeys = providers.map((provider) => provider.key);
+      const current = state.settings.provider && providerKeys.includes(state.settings.provider)
+        ? state.settings.provider
+        : relayConfig.defaultProvider || 'mock';
+
+      el.providerSelect.value = current;
+    }
+
+    function renderSettingsForm() {
+      const thread = getActiveThread();
+      if (!thread) return;
+
+      const settings = thread.settings || state.settings || DEFAULT_THREADED_SETTINGS;
+      el.providerSelect.value = settings.provider || relayConfig.defaultProvider || 'mock';
+      el.modelInput.value = settings.model || relayConfig.defaultModel || '';
+      el.endpointInput.value = settings.endpoint || DECISION_API_DEFAULT;
+    }
+
+    function ensureThreadSettings(thread) {
+      thread.settings = {
+        ...DEFAULT_THREADED_SETTINGS,
+        ...(thread.settings && typeof thread.settings === 'object' ? thread.settings : {})
+      };
+      if (!thread.settings.provider) thread.settings.provider = relayConfig.defaultProvider || 'mock';
+      if (!thread.settings.model) thread.settings.model = relayConfig.defaultModel || '';
+      if (!thread.settings.endpoint) thread.settings.endpoint = DECISION_API_DEFAULT;
+    }
+
+    function renderThreadList() {
+      if (state.threads.length === 0) {
+        el.threadList.innerHTML = '<div class="empty-threads">No decision threads yet. Start one and the coach will keep the history per user.</div>';
+        return;
+      }
+
+      el.threadList.innerHTML = state.threads.map((thread) => {
+        const messageCount = thread.messages.filter((message) => message.role === 'user').length;
+        const activeClass = thread.id === state.activeThreadId ? 'active' : '';
+        const providerLabel = (relayConfig.providers || PROVIDER_OPTIONS).find((provider) => provider.key === thread.settings.provider)?.label || thread.settings.provider || 'Default';
+        const modelLabel = thread.settings.model || relayConfig.defaultModel || 'default model';
+
+        return `
+          <div class="thread-item ${activeClass}" data-thread-id="${escapeHtml(thread.id)}">
+            <div class="thread-title">${escapeHtml(thread.title || 'New decision')}</div>
+            <div class="thread-meta">
+              <span class="meta-pill">${messageCount} messages</span>
+              <span class="meta-pill">${escapeHtml(providerLabel)}</span>
+              <span class="meta-pill">${escapeHtml(truncate(modelLabel, 18))}</span>
+            </div>
+            <div class="thread-meta" style="margin-top:0.45rem;">${escapeHtml(formatRelativeTime(thread.updatedAt))}</div>
+          </div>
+        `;
+      }).join('');
+
+      el.threadList.querySelectorAll('.thread-item').forEach((node) => {
+        node.addEventListener('click', () => selectThread(node.dataset.threadId));
+      });
+    }
+
+    function renderHero() {
+      const thread = getActiveThread();
+      const settings = thread.settings || state.settings || DEFAULT_THREADED_SETTINGS;
+      el.threadHeading.textContent = thread?.title || 'New decision';
+      el.threadDesc.textContent = thread?.summary
+        ? thread.summary
+        : 'Describe the choice you are facing. The coach will update the live framework tabs after every message and finish with a memo that captures the recommendation, tradeoffs, risks, and next action.';
+
+      const providerLabel = (relayConfig.providers || PROVIDER_OPTIONS).find((provider) => provider.key === settings.provider)?.label || settings.provider || 'Default';
+      const modelLabel = settings.model || relayConfig.defaultModel || 'default model';
+      setStatus(`${providerLabel} / ${modelLabel}`);
+    }
+
+    function renderChat() {
+      const thread = getActiveThread();
+      if (!thread) {
+        el.chatMessages.innerHTML = '<div class="empty-chat">No thread is active yet.</div>';
+        return;
+      }
+
+      if (!thread.messages || thread.messages.length === 0) {
+        el.chatMessages.innerHTML = `
+          <div class="empty-chat">
+            <strong>Start with the choice itself.</strong>
+            <div style="margin-top:0.45rem;">The coach works best when you describe the decision, the options, and what feels uncertain. Try one of these prompts:</div>
+            <div class="prompt-chips">
+              <button type="button" class="chip" data-starter="I need help deciding between two options.">Two options</button>
+              <button type="button" class="chip" data-starter="Use first principles to break down this decision.">First principles</button>
+              <button type="button" class="chip" data-starter="What would the inversion of this choice look like?">Inversion</button>
+              <button type="button" class="chip" data-starter="What second order effects am I missing?">Second order effects</button>
+            </div>
+          </div>
+        `;
+
+        el.chatMessages.querySelectorAll('[data-starter]').forEach((button) => {
+          button.addEventListener('click', () => {
+            el.messageInput.value = button.dataset.starter;
+            el.messageInput.focus();
+          });
+        });
+        return;
+      }
+
+      el.chatMessages.innerHTML = thread.messages.map((message) => {
+        const roleClass = message.role === 'assistant' ? 'assistant' : 'user';
+        const label = message.role === 'assistant' ? 'Decision Coach' : 'You';
+        const meta = message.createdAt ? formatRelativeTime(message.createdAt) : '';
+        return `
+          <div class="message ${roleClass}">
+            <div class="message-label">${escapeHtml(label)}</div>
+            <div class="message-bubble">${escapeHtml(message.content)}</div>
+            <div class="message-meta">${escapeHtml(meta)}</div>
+          </div>
+        `;
+      }).join('');
+
+      el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+    }
+
+    function renderTabs() {
+      const currentThread = getActiveThread();
+      const analysis = currentThread?.analysis || EMPTY_ANALYSIS();
+      el.analysisTabs.innerHTML = TABS.map((tab) => {
+        const activeClass = tab.id === activeTab ? 'active' : '';
+        const hasContent = tabHasContent(analysis, tab.id) ? '• ' : '';
+        return `<button type="button" class="tab-btn ${activeClass}" data-tab="${tab.id}">${hasContent}${escapeHtml(tab.label)}</button>`;
+      }).join('');
+
+      el.analysisTabs.querySelectorAll('.tab-btn').forEach((button) => {
+        button.addEventListener('click', () => {
+          activeTab = button.dataset.tab;
+          const thread = getActiveThread();
+          if (thread) {
+            thread.focusTab = activeTab;
+          }
+          state.activeTab = activeTab;
+          saveState(false);
+          renderTabs();
+          renderPanel();
+        });
+      });
+    }
+
+    function tabHasContent(analysis, tabId) {
+      const section = analysis[tabId];
+      if (!section) return false;
+      if (tabId === 'decisionModels') return Array.isArray(section.models) && section.models.length > 0;
+      if (tabId === 'synthesis') return !!section.recommendation || !!section.nextAction;
+      if (tabId === 'firstPrinciples') return section.coreFacts?.length > 0 || !!section.answer;
+      if (tabId === 'inversion') return section.failureModes?.length > 0 || !!section.answer;
+      if (tabId === 'secondOrder') return section.immediateEffects?.length > 0 || !!section.answer;
+      return false;
+    }
+
+    function renderPanel() {
+      const thread = getActiveThread();
+      const analysis = thread?.analysis || EMPTY_ANALYSIS();
+      const section = analysis[activeTab] || EMPTY_ANALYSIS()[activeTab];
+      const tab = TABS.find((item) => item.id === activeTab) || TABS[0];
+      const loading = thread?.status === 'thinking';
+      let content = '';
+
+      if (activeTab === 'firstPrinciples') {
+        content = `
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">${escapeHtml(section.headline)}</div>
+              <div class="panel-hint">Break the decision into the irreducible facts, the assumptions you are making, and the question that truly matters.</div>
+            </div>
+            <span class="panel-badge">${escapeHtml(tab.hint)}</span>
+          </div>
+          ${renderTwoColumnLists([
+            ['Core facts', section.coreFacts],
+            ['Assumptions to test', section.assumptions],
+            ['Questions to answer', section.questions]
+          ])}
+          <div class="panel-block" style="margin-top:0.75rem;">
+            <div class="block-title">First-principles answer</div>
+            <div class="block-copy ${loading ? 'loading-state' : ''}">${escapeHtml(section.answer || 'No answer yet.')}</div>
+          </div>
+        `;
+      } else if (activeTab === 'inversion') {
+        content = `
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">${escapeHtml(section.headline)}</div>
+              <div class="panel-hint">Inversion asks what would make this decision go badly and then turns those answers into guardrails.</div>
+            </div>
+            <span class="panel-badge">${escapeHtml(tab.hint)}</span>
+          </div>
+          ${renderTwoColumnLists([
+            ['Failure modes', section.failureModes],
+            ['Guardrails', section.guardrails]
+          ])}
+          <div class="panel-block" style="margin-top:0.75rem;">
+            <div class="block-title">Inversion answer</div>
+            <div class="block-copy ${loading ? 'loading-state' : ''}">${escapeHtml(section.answer || 'No inversion yet.')}</div>
+          </div>
+        `;
+      } else if (activeTab === 'secondOrder') {
+        content = `
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">${escapeHtml(section.headline)}</div>
+              <div class="panel-hint">Second order thinking asks what happens after the obvious first move, then after that effect compounds.</div>
+            </div>
+            <span class="panel-badge">${escapeHtml(tab.hint)}</span>
+          </div>
+          ${renderTwoColumnLists([
+            ['Immediate effects', section.immediateEffects],
+            ['Second and third order effects', section.secondOrderEffects]
+          ])}
+          <div class="panel-block" style="margin-top:0.75rem;">
+            <div class="block-title">Second order answer</div>
+            <div class="block-copy ${loading ? 'loading-state' : ''}">${escapeHtml(section.answer || 'No downstream analysis yet.')}</div>
+          </div>
+        `;
+      } else if (activeTab === 'decisionModels') {
+        const modelsHtml = Array.isArray(section.models) && section.models.length > 0
+          ? section.models.map((model) => `
+              <div class="model-card">
+                <div class="model-name">${escapeHtml(model.name)}</div>
+                <div class="block-copy"><strong>Why it fits</strong><br>${escapeHtml(model.whyItFits || 'This model is relevant for the current decision.')}</div>
+                <div class="block-copy"><strong>How to use it</strong><br>${escapeHtml(model.howToUse || 'Apply the model to the options you are weighing.')}</div>
+              </div>
+            `).join('')
+          : '<div class="empty-panel">The model tab will highlight whichever frameworks from <em>The Decision Book</em> best fit the current decision.</div>';
+
+        content = `
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">${escapeHtml(section.headline)}</div>
+              <div class="panel-hint">The coach should pick a small number of models, not every model. Relevance matters more than volume.</div>
+            </div>
+            <span class="panel-badge">${escapeHtml(tab.hint)}</span>
+          </div>
+          <div class="panel-grid">
+            ${modelsHtml}
+          </div>
+          <div class="panel-block" style="margin-top:0.75rem;">
+            <div class="block-title">Book-model synthesis</div>
+            <div class="block-copy ${loading ? 'loading-state' : ''}">${escapeHtml(section.answer || 'No model synthesis yet.')}</div>
+          </div>
+        `;
+      } else {
+        content = `
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">${escapeHtml(section.headline)}</div>
+              <div class="panel-hint">The synthesis tab merges all the lenses into one recommendation, with tradeoffs, risks, and a concrete next action.</div>
+            </div>
+            <span class="panel-badge">${escapeHtml(tab.hint)}</span>
+          </div>
+          <div class="memo-grid">
+            <div class="memo-block">
+              <strong>Recommendation</strong>
+              <div class="${loading ? 'loading-state' : ''}">${escapeHtml(section.recommendation || 'No recommendation yet.')}</div>
+            </div>
+            <div class="memo-block">
+              <strong>Next action</strong>
+              <div class="${loading ? 'loading-state' : ''}">${escapeHtml(section.nextAction || 'No next action yet.')}</div>
+            </div>
+            <div class="memo-block">
+              <strong>Confidence</strong>
+              <div><span class="confidence-pill">${escapeHtml(section.confidence || 'medium')}</span></div>
+            </div>
+          </div>
+          <div class="panel-grid" style="margin-top:0.75rem;">
+            <div class="panel-block">
+              <div class="block-title">Tradeoffs</div>
+              ${renderList(section.tradeoffs, 'This is where the real compromise shows up.')}
+            </div>
+            <div class="panel-block">
+              <div class="block-title">Risks</div>
+              ${renderList(section.risks, 'This is what could go wrong if the wrong assumption survives.')}
+            </div>
+          </div>
+        `;
+      }
+
+      el.analysisPanel.innerHTML = content;
+    }
+
+    function renderList(items, emptyText) {
+      if (!Array.isArray(items) || items.length === 0) {
+        return `<div class="empty-panel">${escapeHtml(emptyText)}</div>`;
+      }
+      return `
+        <ul class="bullet-list">
+          ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
+        </ul>
+      `;
+    }
+
+    function renderTwoColumnLists(columns) {
+      return `
+        <div class="panel-grid">
+          ${columns.map(([title, items]) => `
+            <div class="panel-block">
+              <div class="block-title">${escapeHtml(title)}</div>
+              ${renderList(items, `No ${title.toLowerCase()} yet.`)}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function renderAll() {
+      state = normalizeState(state);
+      const thread = getActiveThread();
+      if (thread) ensureThreadSettings(thread);
+      renderThreadList();
+      renderHero();
+      renderChat();
+      renderTabs();
+      renderPanel();
+      renderSettingsForm();
+      renderBusyState(thread?.status === 'thinking');
+      const currentThread = getActiveThread();
+      if (currentThread) {
+        state.activeThreadId = currentThread.id;
+      }
+    }
+
+    function renderBusyState(isBusy) {
+      el.sendBtn.disabled = isBusy;
+      el.refreshMemoBtn.disabled = isBusy;
+      el.newThreadBtn.disabled = isBusy;
+      el.renameThreadBtn.disabled = isBusy;
+      el.resetSettingsBtn.disabled = isBusy;
+      el.starterBtn.disabled = isBusy;
+      el.providerSelect.disabled = isBusy;
+      el.modelInput.disabled = isBusy;
+      el.endpointInput.disabled = isBusy;
+      el.composer.querySelectorAll('textarea, select, input').forEach((input) => {
+        if (input !== el.endpointInput && input !== el.modelInput && input !== el.providerSelect) {
+          input.disabled = isBusy;
+        }
+      });
+      if (isBusy) {
+        setStatus('Thinking...');
+      }
+    }
+
+    function createThread(title, settings = state.settings) {
+      const timestamp = new Date().toISOString();
+      return normalizeThread({
+        id: uid('thread'),
+        title: title || 'New decision',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        summary: '',
+        focusTab: state.activeTab || 'firstPrinciples',
+        status: 'idle',
+        settings: { ...DEFAULT_THREADED_SETTINGS, ...settings },
+        analysis: EMPTY_ANALYSIS(),
+        messages: []
+      });
+    }
+
+    function selectThread(threadId) {
+      const thread = state.threads.find((item) => item.id === threadId);
+      if (!thread) return;
+      state.activeThreadId = thread.id;
+      activeTab = thread.focusTab || state.activeTab || 'firstPrinciples';
+      state.activeTab = activeTab;
+      ensureThreadSettings(thread);
+      state.settings = { ...thread.settings };
+      saveState(false);
+      renderAll();
+      el.messageInput.focus();
+    }
+
+    function newThread() {
+      const thread = createThread('New decision', state.settings);
+      state.threads.unshift(thread);
+      state.activeThreadId = thread.id;
+      state.activeTab = 'firstPrinciples';
+      activeTab = 'firstPrinciples';
+      saveState(true);
+      renderAll();
+      el.messageInput.value = '';
+      el.messageInput.focus();
+    }
+
+    function renameCurrentThread() {
+      const thread = getActiveThread();
+      if (!thread) return;
+      const next = prompt('Rename this decision thread', thread.title || 'New decision');
+      if (!next || !next.trim()) return;
+      thread.title = next.trim();
+      thread.updatedAt = new Date().toISOString();
+      saveState(true);
+      renderAll();
+    }
+
+    function resetThreadDefaults() {
+      const thread = getActiveThread();
+      if (!thread) return;
+      thread.settings = {
+        ...DEFAULT_THREADED_SETTINGS,
+        provider: relayConfig.defaultProvider || 'mock',
+        model: relayConfig.defaultModel || '',
+        endpoint: DECISION_API_DEFAULT
+      };
+      state.settings = { ...thread.settings };
+      saveState(true);
+      renderAll();
+    }
+
+    function syncSettingsFromInputs() {
+      const thread = getActiveThread();
+      if (!thread) return;
+      ensureThreadSettings(thread);
+      thread.settings.provider = el.providerSelect.value || relayConfig.defaultProvider || 'mock';
+      thread.settings.model = el.modelInput.value.trim() || relayConfig.defaultModel || '';
+      thread.settings.endpoint = el.endpointInput.value.trim() || DECISION_API_DEFAULT;
+      state.settings = { ...thread.settings };
+      thread.updatedAt = new Date().toISOString();
+      saveState(true);
+      renderThreadList();
+      renderHero();
+    }
+
+    function getCurrentEndpoint() {
+      const thread = getActiveThread();
+      const endpoint = thread?.settings?.endpoint || state.settings.endpoint || DECISION_API_DEFAULT;
+      return endpoint || DECISION_API_DEFAULT;
+    }
+
+    async function sendDecisionPrompt(promptText, options = {}) {
+      const thread = getActiveThread();
+      if (!thread || isSubmitting) return;
+
+      const content = String(promptText || '').trim();
+      if (!content) return;
+
+      isSubmitting = true;
+      thread.messages.push({
+        id: uid('msg'),
+        role: 'user',
+        content,
+        createdAt: new Date().toISOString()
+      });
+
+      if (!thread.title || thread.title === 'New decision') {
+        thread.title = buildThreadTitle(content);
+      }
+
+      thread.status = 'thinking';
+      thread.focusTab = activeTab;
+      thread.updatedAt = new Date().toISOString();
+      state.activeThreadId = thread.id;
+      state.activeTab = activeTab;
+      persistThreadSettings(thread);
+      renderAll();
+      el.messageInput.value = '';
+      setStatus('Thinking...');
+
+      try {
+        const payload = buildRelayPayload(thread, options);
+        const response = await callDecisionRelay(payload);
+
+        thread.analysis = normalizeAnalysis(response.frameworks || response.analysis);
+        thread.summary = String(
+          response.frameworks?.synthesis?.recommendation ||
+          response.assistantMessage ||
+          thread.summary ||
+          ''
+        ).trim();
+        thread.title = response.threadTitle ? String(response.threadTitle).trim() : thread.title;
+        thread.messages.push({
+          id: uid('msg'),
+          role: 'assistant',
+          content: response.assistantMessage || thread.summary || 'Analysis complete.',
+          createdAt: response.generatedAt || new Date().toISOString()
+        });
+        thread.status = 'idle';
+        thread.updatedAt = response.generatedAt || new Date().toISOString();
+        state.settings = { ...thread.settings };
+        saveState(true);
+        renderAll();
+      } catch (err) {
+        thread.status = 'error';
+        thread.updatedAt = new Date().toISOString();
+        thread.messages.push({
+          id: uid('msg'),
+          role: 'assistant',
+          content: `The relay could not complete the analysis. ${err.message || 'Please check the server and try again.'}`,
+          createdAt: new Date().toISOString()
+        });
+        saveState(true);
+        renderAll();
+        setStatus('Relay error');
+      } finally {
+        isSubmitting = false;
+        renderBusyState(false);
+      }
+    }
+
+    async function refreshCurrentMemo() {
+      const thread = getActiveThread();
+      if (!thread || thread.messages.length === 0 || isSubmitting) return;
+
+      isSubmitting = true;
+      thread.status = 'thinking';
+      thread.focusTab = 'synthesis';
+      state.activeTab = 'synthesis';
+      activeTab = 'synthesis';
+      thread.updatedAt = new Date().toISOString();
+      saveState(false);
+      renderTabs();
+      renderPanel();
+      renderBusyState(true);
+      setStatus('Thinking...');
+
+      try {
+        const payload = buildRelayPayload(thread, { endpoint: getCurrentEndpoint() });
+        const response = await callDecisionRelay(payload);
+        thread.analysis = normalizeAnalysis(response.frameworks || response.analysis);
+        thread.summary = String(
+          response.frameworks?.synthesis?.recommendation ||
+          response.assistantMessage ||
+          thread.summary ||
+          ''
+        ).trim();
+        thread.title = response.threadTitle ? String(response.threadTitle).trim() : thread.title;
+        thread.status = 'idle';
+        thread.updatedAt = response.generatedAt || new Date().toISOString();
+        state.settings = { ...thread.settings };
+        saveState(true);
+        renderAll();
+      } catch (err) {
+        thread.status = 'error';
+        thread.updatedAt = new Date().toISOString();
+        saveState(true);
+        renderAll();
+        setStatus('Relay error');
+      } finally {
+        isSubmitting = false;
+        renderBusyState(false);
+      }
+    }
+
+    function buildRelayPayload(thread, options = {}) {
+      const endpoint = options.endpoint || getCurrentEndpoint();
+      const provider = thread.settings.provider || relayConfig.defaultProvider || 'mock';
+      const model = thread.settings.model || relayConfig.defaultModel || '';
+      const transcript = thread.messages.slice(-20).map((message) => ({
+        role: message.role,
+        content: message.content
+      }));
+
+      return {
+        provider,
+        model,
+        endpoint,
+        threadTitle: thread.title,
+        summary: thread.summary || '',
+        focusFramework: thread.focusTab || activeTab,
+        messages: transcript
+      };
+    }
+
+    async function callDecisionRelay(payload) {
+      const endpoint = String(payload.endpoint || DECISION_API_DEFAULT).trim() || DECISION_API_DEFAULT;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(text || `HTTP ${response.status}`);
+      }
+
+      return response.json();
+    }
+
+    async function loadRelayConfig() {
+      try {
+        const response = await fetch('/api/decision-config');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const config = await response.json();
+        relayConfig = {
+          defaultProvider: config.defaultProvider || 'mock',
+          defaultModel: config.defaultModel || 'flowdash-mock',
+          demoMode: !!config.demoMode,
+          providers: Array.isArray(config.providers) && config.providers.length > 0 ? config.providers : PROVIDER_OPTIONS
+        };
+
+        setRelayStatus(
+          relayConfig.demoMode
+            ? 'Demo mode active. Configure API keys in the relay to use a live model.'
+            : `Relay ready: ${relayConfig.defaultProvider} / ${relayConfig.defaultModel}`,
+          relayConfig.demoMode ? 'warning' : 'neutral'
+        );
+      } catch (err) {
+        relayConfig = {
+          defaultProvider: 'mock',
+          defaultModel: 'flowdash-mock',
+          demoMode: true,
+          providers: PROVIDER_OPTIONS
+        };
+        setRelayStatus('Relay unavailable. Start the app with `npm start` to enable AI chat.', 'error');
+      }
+    }
+
+    function bootstrapSettingsFromRelay() {
+      const activeThread = getActiveThread();
+      if (!activeThread) return;
+
+      ensureThreadSettings(activeThread);
+      if (!activeThread.settings.provider) activeThread.settings.provider = relayConfig.defaultProvider || 'mock';
+      if (!activeThread.settings.model) activeThread.settings.model = relayConfig.defaultModel || '';
+      if (!activeThread.settings.endpoint) activeThread.settings.endpoint = DECISION_API_DEFAULT;
+      state.settings = { ...activeThread.settings };
+      saveState(false);
+    }
+
+    function wireEvents() {
+      el.providerSelect.addEventListener('change', () => {
+        const current = getActiveThread();
+        if (!current) return;
+        current.settings.provider = el.providerSelect.value || relayConfig.defaultProvider || 'mock';
+        if (!el.modelInput.value.trim()) {
+          el.modelInput.value = relayConfig.defaultModel || '';
+        }
+        syncSettingsFromInputs();
+      });
+
+      el.modelInput.addEventListener('change', () => {
+        syncSettingsFromInputs();
+      });
+
+      el.endpointInput.addEventListener('change', () => {
+        syncSettingsFromInputs();
+      });
+
+      el.newThreadBtn.addEventListener('click', newThread);
+      el.renameThreadBtn.addEventListener('click', renameCurrentThread);
+      el.resetSettingsBtn.addEventListener('click', resetThreadDefaults);
+
+      el.starterBtn.addEventListener('click', () => {
+        el.messageInput.value = 'Help me think through this decision from first principles, inversion, second order thinking, and the most relevant models from The Decision Book.';
+        el.messageInput.focus();
+      });
+
+      el.refreshMemoBtn.addEventListener('click', () => {
+        refreshCurrentMemo();
+      });
+
+      el.composer.addEventListener('submit', (event) => {
+        event.preventDefault();
+        sendDecisionPrompt(el.messageInput.value);
+      });
+
+      el.messageInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+          event.preventDefault();
+          sendDecisionPrompt(el.messageInput.value);
+        }
+      });
+    }
+
+    async function init() {
+      const currentUser = AuthService.getCurrentUser();
+      if (currentUser) {
+        el.userDisplay.textContent = `Welcome, ${currentUser.username}`;
+      }
+
+      await loadRelayConfig();
+      renderProviderOptions();
+      state = normalizeState(AuthService.Storage.loadJSON(DECISION_STATE_KEY, deepClone(DECISION_DEFAULTS)));
+      bootstrapSettingsFromRelay();
+      activeTab = state.activeTab || getActiveThread()?.focusTab || 'firstPrinciples';
+      wireEvents();
+      renderAll();
+      setStatus(isSubmitting ? 'Thinking...' : 'Ready');
+      if (state.threads.length === 1 && state.threads[0].messages.length === 0) {
+        el.messageInput.focus();
+      }
+    }
+
+    init().catch((err) => {
+      console.error('Decision coach failed to initialize:', err);
+      setRelayStatus('Decision coach failed to load. Check the browser console.', 'error');
+    });
+  </script>
+</body>
+</html>

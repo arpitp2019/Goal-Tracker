@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlowDash | Your Productivity Suite</title>
+  <script src="auth.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,600,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #171614;
+      --bg-card: #1f1e1b;
+      --bg-header: rgba(23, 22, 20, 0.95);
+      --text-main: #f0ede8;
+      --text-muted: #8c8880;
+      --accent-goal: #8b5cf6;
+      --accent-habit: #4f98a3;
+      --accent-vault: #01696f;
+      --accent-decision: #f59e0b;
+      --font-body: 'Satoshi', sans-serif;
+      --font-display: 'Boska', serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-main);
+      background-image:
+        radial-gradient(ellipse at 20% 20%, rgba(79,152,163,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(139,92,246,0.05) 0%, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--bg-header);
+      backdrop-filter: blur(20px);
+      padding: 0 2rem;
+      height: 72px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(79,152,163,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-decoration: none;
+      color: var(--accent-habit);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 0.5rem;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .nav-pill {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.4rem 1.25rem;
+      border-radius: 50px;
+      transition: all 0.2s;
+    }
+
+    .nav-pill:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-pill.active {
+      color: #fff;
+      background: var(--accent-habit);
+      box-shadow: 0 4px 12px rgba(79, 152, 163, 0.3);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero {
+      margin-bottom: 4rem;
+    }
+
+    .hero h2 {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      line-height: 1.1;
+    }
+
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .app-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 2rem;
+      width: 100%;
+    }
+
+    .app-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 2.25rem;
+      text-decoration: none;
+      color: inherit;
+      border: 2px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      border-color: rgba(124, 58, 237, 0.3);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    .app-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      transition: opacity 0.3s;
+    }
+
+    .app-card.goal::before { background: linear-gradient(90deg, var(--accent-goal), #9333ea); }
+    .app-card.habit::before { background: linear-gradient(90deg, var(--accent-habit), #3b82f6); }
+    .app-card.vault::before { background: linear-gradient(90deg, var(--accent-vault), #02878e); }
+    .app-card.decision::before { background: linear-gradient(90deg, var(--accent-decision), #f97316); }
+
+    .icon-wrapper {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      transition: transform 0.3s;
+    }
+
+    .app-card:hover .icon-wrapper {
+      transform: rotate(10deg) scale(1.1);
+    }
+
+    .goal .icon-wrapper { background: rgba(124, 58, 237, 0.1); color: var(--accent-goal); }
+    .habit .icon-wrapper { background: rgba(0, 196, 180, 0.1); color: var(--accent-habit); }
+    .vault .icon-wrapper { background: rgba(1, 105, 111, 0.1); color: var(--accent-vault); }
+    .decision .icon-wrapper { background: rgba(245, 158, 11, 0.12); color: var(--accent-decision); }
+
+    .app-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+    }
+
+    .app-card p {
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      text-align: left;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .feature-list li::before {
+      content: '✦';
+      color: var(--accent-goal);
+    }
+    .habit .feature-list li::before { color: var(--accent-habit); }
+    .decision .feature-list li::before { color: var(--accent-decision); }
+
+    .btn {
+      margin-top: auto;
+      padding: 0.8rem 2rem;
+      border-radius: 50px;
+      font-weight: 800;
+      font-size: 1rem;
+      transition: all 0.2s;
+      width: 100%;
+      text-align: center;
+    }
+
+    .goal .btn {
+      background: linear-gradient(135deg, var(--accent-goal), #9333ea);
+      color: white;
+      box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+    }
+    .habit .btn {
+      background: linear-gradient(135deg, var(--accent-habit), #3b82f6);
+      color: white;
+      box-shadow: 0 4px 15px rgba(0, 196, 180, 0.3);
+    }
+    .vault .btn {
+      background: linear-gradient(135deg, var(--accent-vault), #02878e);
+      color: white;
+      box-shadow: 0 4px 15px rgba(1, 105, 111, 0.3);
+    }
+    .decision .btn {
+      background: linear-gradient(135deg, var(--accent-decision), #f97316);
+      color: #1f1300;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.28);
+    }
+    footer {
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      .hero h2 { font-size: 2.5rem; }
+      .app-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <a href="index.html" class="logo">🚀 FlowDash</a>
+    </div>
+    <nav>
+      <a href="index.html" class="nav-pill active">🏠 Home</a>
+      <a href="goal-tracker.html" class="nav-pill">🎯 Goals</a>
+      <a href="habit-tracker.html" class="nav-pill">🌱 Habits</a>
+      <a href="mindvault.html" class="nav-pill">🧠 Vault</a>
+      <a href="decision-coach.html" class="nav-pill">🧭 Decision</a>
+    </nav>
+    <div class="header-right" style="display: flex; align-items: center; gap: 1rem;">
+      <span id="user-display" style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted);"></span>
+      <button onclick="AuthService.logout()" class="nav-pill" style="border: 1px solid rgba(255,255,255,0.1); cursor: pointer; background: transparent;">🚪 Logout</button>
+    </div>
+  </header>
+
+  <script>
+    // Initialize user display
+    const user = AuthService.getCurrentUser();
+    if (user) {
+      document.getElementById('user-display').innerText = `Welcome, ${user.username}`;
+    }
+  </script>
+
+  <main>
+    <section class="hero">
+      <h2>Architect Your Future</h2>
+      <p>A minimalist suite designed for ADHD minds to bridge the gap between intention and action. Master your big goals and daily habits in one place.</p>
+    </section>
+
+    <div class="app-cards">
+      <!-- SMART Goal Tracker -->
+      <a href="goal-tracker.html" class="app-card goal">
+        <div class="icon-wrapper">🎯</div>
+        <h3>SMART Goal Tracker</h3>
+        <p>Break down massive projects into actionable sprints and tasks with built-in time pressure and RPG-style motivation.</p>
+        <ul class="feature-list">
+          <li>Sprint Stacking Logic</li>
+          <li>Urgency & Progress Dual Bars</li>
+          <li>Confidence Vault for Wins</li>
+          <li>Google Drive Sync</li>
+        </ul>
+        <div class="btn">Launch Goals</div>
+      </a>
+
+      <!-- HabitFlow AI -->
+      <a href="habit-tracker.html" class="app-card habit">
+        <div class="icon-wrapper">🌱</div>
+        <h3>HabitFlow AI</h3>
+        <p>Build unbreakable compound interest through daily consistency. Powered by Nova, your personal AI-driven habit coach.</p>
+        <ul class="feature-list">
+          <li>365-Day Streak Heatmap</li>
+          <li>AI-Driven Nova Coach</li>
+          <li>Gamified Levels & XP</li>
+          <li>Read-Only Historical Data</li>
+        </ul>
+        <div class="btn">Launch Habits</div>
+      </a>
+
+      <!-- MindVault -->
+      <a href="mindvault.html" class="app-card vault">
+        <div class="icon-wrapper">🧠</div>
+        <h3>MindVault SRLJ</h3>
+        <p>Master complex subjects through the power of Spaced Repetition. Built for Java developers and Law students alike.</p>
+        <ul class="feature-list">
+          <li>SM-2 Spaced Repetition Logic</li>
+          <li>Forgetting Curve Forecasting</li>
+          <li>Daily Learning Journal</li>
+          <li>Analytics & Heatmaps</li>
+        </ul>
+        <div class="btn">Launch Vault</div>
+      </a>
+
+      <!-- Decision Coach -->
+      <a href="decision-coach.html" class="app-card decision">
+        <div class="icon-wrapper">🧭</div>
+        <h3>Decision Coach AI</h3>
+        <p>Work through hard choices with first principles, inversion, second order thinking, and the models from <em>The Decision Book</em>.</p>
+        <ul class="feature-list">
+          <li>Chat with Thinking Frameworks</li>
+          <li>Book-Inspired Decision Models</li>
+          <li>Model Switcher for Cheap LLMs</li>
+          <li>Per-User Decision History</li>
+        </ul>
+        <div class="btn">Launch Decisions</div>
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 FlowDash Productivity Suite. All your data stays yours.</p>
+  </footer>
+
+</body>
+</html>
