@@ -124,6 +124,7 @@ const decisionTemplates = {
 function App() {
   const [user, setUser] = useState(undefined);
   const [bootError, setBootError] = useState('');
+  const routerBasename = import.meta.env.BASE_URL || '/';
 
   useEffect(() => {
     apiGetMe()
@@ -142,7 +143,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename}>
       <Routes>
         <Route
           path="/login"
