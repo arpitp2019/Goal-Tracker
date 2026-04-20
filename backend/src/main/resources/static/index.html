@@ -6,10 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FlowDash</title>
     <meta name="description" content="FlowDash is a backend-driven productivity suite for goals, habits, vault notes, and decision coaching." />
-    <script type="module" crossorigin src="/assets/index-ZQb3xPKN.js"></script>
+    <script>
+      (function () {
+        var storageKey = 'flowdash-spa-redirect';
+        try {
+          var redirect = sessionStorage.getItem(storageKey);
+          if (!redirect) {
+            return;
+          }
+          sessionStorage.removeItem(storageKey);
+          history.replaceState(null, '', redirect);
+        } catch (error) {}
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-DpwdzKqG.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-BPPLslpc.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>

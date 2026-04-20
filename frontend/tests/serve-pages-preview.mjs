@@ -31,7 +31,11 @@ function resolveDistPath(requestPath) {
     return candidate;
   }
 
-  return join(distDir, 'index.html');
+  if (!extname(normalizedPath)) {
+    return join(distDir, '404.html');
+  }
+
+  return null;
 }
 
 createServer((request, response) => {
@@ -44,7 +48,8 @@ createServer((request, response) => {
     return;
   }
 
-  response.writeHead(200, {
+  const statusCode = filePath.endsWith(`${sep}404.html`) ? 404 : 200;
+  response.writeHead(statusCode, {
     'Content-Type': contentTypes[extname(filePath)] || 'application/octet-stream'
   });
   createReadStream(filePath).pipe(response);
