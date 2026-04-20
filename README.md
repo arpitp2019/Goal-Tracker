@@ -34,6 +34,12 @@ Deploy the whole app as one Render web service with PostgreSQL:
 
 The app builds the React frontend into the Spring Boot static resources during the Docker build, so the deployed service stays same-origin and session auth works from any device.
 
+## CI/CD
+
+- GitHub Actions runs `frontend` lint/smoke checks and `backend` tests on every pull request and push to `main`.
+- Render should be set to auto-deploy from `main`, so merges that pass CI flow straight into production.
+- GitHub Pages can stay enabled as a frontend-only preview, but the Render URL is the live app.
+
 ## GitHub Pages preview
 
 GitHub Pages can still host the frontend-only preview. If you use it, set `VITE_API_BASE` at build time so the frontend points at a separate backend.
