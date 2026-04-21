@@ -108,15 +108,14 @@ function MindVaultPage() {
     void refresh();
   }, [refresh]);
 
-  useEffect(() => {
-    const queue = overview?.queue || [];
-    if (queue.length === 0) {
-      setSelectedQueueId(null);
-      setShowAnswer(false);
-      return;
-    }
-    setSelectedQueueId((current) => (queue.some((item) => item.id === current) ? current : queue[0].id));
+useEffect(() => {
+    const queue = overview?.queue ?? [];
     setShowAnswer(false);
+    setSelectedQueueId((current) =>
+      queue.length === 0
+        ? null
+        : queue.some((item) => item.id === current) ? current : queue[0].id
+    );
   }, [overview]);
 
   const subjects = overview?.subjects || [];
