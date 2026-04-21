@@ -37,9 +37,9 @@ const goalDefaults = {
   dueDate: ''
 };
 const goalTabs = [
-  { to: '/goals/checklist', label: 'Checklist' },
-  { to: '/goals/calendar', label: 'Calendar' },
-  { to: '/goals/analytics', label: 'Analytics' }
+  { to: '/habits/checklist', label: 'Checklist' },
+  { to: '/habits/calendar', label: 'Calendar' },
+  { to: '/habits/analytics', label: 'Analytics' }
 ];
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -154,13 +154,13 @@ export default function GoalTrackerPage() {
     <section className="page goals-page">
       <div className="page-header goals-header">
         <div>
-          <p className="eyebrow">Goals</p>
-          <h2>Daily progress for outcomes that matter.</h2>
-          <p className="lead">Check progress, scan the year, and keep goal momentum visible.</p>
+          <p className="eyebrow">Habits</p>
+          <h2>Daily progress for habits that matter.</h2>
+          <p className="lead">Check progress, scan the year, and keep habit momentum visible.</p>
         </div>
         <div className="goal-actions">
           <button className="button secondary" type="button" onClick={resetForm}>
-            New goal
+            New habit
           </button>
           <button className="button secondary" type="button" onClick={() => setRefreshKey((current) => current + 1)}>
             Refresh
@@ -168,7 +168,7 @@ export default function GoalTrackerPage() {
         </div>
       </div>
 
-      <div className="tabs goal-tabs" role="tablist" aria-label="Goal pages">
+      <div className="tabs goal-tabs" role="tablist" aria-label="Habit pages">
         {goalTabs.map((tab) => (
           <NavLink key={tab.to} to={tab.to} className={({ isActive }) => `tab${isActive ? ' active' : ''}`}>
             {tab.label}
@@ -232,8 +232,8 @@ function GoalChecklistView({ checklist, form, saving, editingId, loading, select
           <input className="input compact-date" type="date" value={selectedDate} onChange={(event) => onDateChange(event.target.value)} />
         </div>
         <div className="goal-list">
-          {loading ? <div className="empty-state">Loading goals...</div> : null}
-          {!loading && checklist.length === 0 ? <div className="empty-state">No active goals yet.</div> : null}
+          {loading ? <div className="empty-state">Loading habits...</div> : null}
+          {!loading && checklist.length === 0 ? <div className="empty-state">No active habits yet.</div> : null}
           {checklist.map((goal) => (
             <article key={goal.id} className={`goal-row${goal.progressedToday ? ' complete' : ''}${goal.overdue ? ' overdue' : ''}`}>
               <input
@@ -271,7 +271,7 @@ function GoalChecklistView({ checklist, form, saving, editingId, loading, select
 
       <form className="panel goal-form" onSubmit={onSubmit}>
         <div className="panel-header">
-          <h3>{editingId ? 'Edit goal' : 'Create goal'}</h3>
+          <h3>{editingId ? 'Edit habit' : 'Create habit'}</h3>
           <span className="muted">Daily progress stays separate from DONE</span>
         </div>
         <label className="field">
@@ -303,7 +303,7 @@ function GoalChecklistView({ checklist, form, saving, editingId, loading, select
         </label>
         <div className="form-actions">
           <button className="button" disabled={saving}>
-            {saving ? 'Saving...' : editingId ? 'Update goal' : 'Create goal'}
+            {saving ? 'Saving...' : editingId ? 'Update habit' : 'Create habit'}
           </button>
           <button className="button secondary" type="button" onClick={onReset}>
             Cancel
@@ -344,7 +344,7 @@ function GoalCalendarView({ selectedYear, selectedDate, calendarWeeks, selectedD
               <span key={day}>{day}</span>
             ))}
           </div>
-          <div className="goal-year-grid" aria-label="Goal yearly activity calendar">
+          <div className="goal-year-grid" aria-label="Habit yearly activity calendar">
             {calendarWeeks.map((week, weekIndex) => (
               <div className="goal-year-week" key={`week-${weekIndex}`}>
                 {week.map((day, dayIndex) => {
@@ -359,7 +359,7 @@ function GoalCalendarView({ selectedYear, selectedDate, calendarWeeks, selectedD
                       className={`goal-day level-${level}${day.date === selectedDate ? ' selected' : ''}`}
                       data-date={day.date}
                       data-level={level}
-                      aria-label={`${formatDateLabel(day.date)} ${day.progressedGoalCount}/${day.activeGoalCount} goals`}
+                      aria-label={`${formatDateLabel(day.date)} ${day.progressedGoalCount}/${day.activeGoalCount} habits`}
                       onClick={() => onDateChange(day.date)}
                     />
                   );
@@ -372,7 +372,7 @@ function GoalCalendarView({ selectedYear, selectedDate, calendarWeeks, selectedD
       <div className="goal-calendar-detail">
         <div>
           <span className="eyebrow">{formatDateLabel(selectedDate)}</span>
-          <h4>{selectedDay?.progressedGoalCount || 0}/{selectedDay?.activeGoalCount || 0} goals progressed</h4>
+          <h4>{selectedDay?.progressedGoalCount || 0}/{selectedDay?.activeGoalCount || 0} habits progressed</h4>
         </div>
         <div className="goal-mini-list">
           {selectedGoals.length === 0 ? <span className="muted">No progress logged for this day.</span> : null}
@@ -391,9 +391,9 @@ function GoalAnalyticsView({ stats, analytics, goals }) {
       <div className="panel-header">
         <div>
           <h3>Analytics</h3>
-          <p className="muted">Progress health across goals</p>
+          <p className="muted">Progress health across habits</p>
         </div>
-        <span className="pill">{stats.totalGoals} goals</span>
+        <span className="pill">{stats.totalGoals} habits</span>
       </div>
       <div className="goal-stats-grid">
         <StatChip label="Today" value={`${stats.todayProgress}%`} />

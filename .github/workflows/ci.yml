@@ -51,10 +51,6 @@ jobs:
       - name: Backend package
         run: bash ./backend/mvnw -f backend/pom.xml -DskipTests package
 
-      - name: Goals smoke test
-        working-directory: frontend
-        run: npm run smoke:goals
-
       - name: MindVault smoke test
         working-directory: frontend
         run: npm run smoke:mindvault

@@ -16,13 +16,11 @@ import {
   streamDecisionChat
 } from './api';
 import GoalTrackerPage from './GoalTrackerPage';
-import HabitTrackerPage from './HabitTrackerPage';
 import MindVaultPage from './MindVaultPage';
 
 const navItems = [
   { path: '/', label: 'Home', icon: '◌' },
-  { path: '/goals', label: 'Goals', icon: '◎' },
-  { path: '/habits', label: 'Habits', icon: '◉' },
+  { path: '/habits', label: 'Habits', icon: 'H' },
   { path: '/vault', label: 'MindVault', icon: '▣' },
   { path: '/decision', label: 'Decision Coach', icon: '✦' }
 ];
@@ -91,8 +89,8 @@ function App() {
           }
         >
           <Route path="/" element={<DashboardPage />} />
-          <Route path="/goals/*" element={<GoalTrackerPage />} />
-          <Route path="/habits" element={<HabitTrackerPage />} />
+          <Route path="/habits/*" element={<GoalTrackerPage />} />
+          <Route path="/goals/*" element={<Navigate to="/habits/checklist" replace />} />
           <Route path="/vault" element={<MindVaultPage />} />
           <Route path="/decision" element={<DecisionCoachPage />} />
         </Route>
@@ -150,8 +148,7 @@ function AppShell({ user, onLogout }) {
 function DashboardPage() {
   const cards = useMemo(
     () => [
-      { title: 'Goals', path: '/goals', description: 'Track the few outcomes that matter most.' },
-      { title: 'Habits', path: '/habits', description: 'Keep steady routines visible and measurable.' },
+      { title: 'Habits', path: '/habits', description: 'Keep steady progress visible and measurable.' },
       { title: 'MindVault', path: '/vault', description: 'Plan subjects, sprints, and daily reviews.' },
       { title: 'Decision Coach', path: '/decision', description: 'Think in frameworks and get a final recommendation.' }
     ],
