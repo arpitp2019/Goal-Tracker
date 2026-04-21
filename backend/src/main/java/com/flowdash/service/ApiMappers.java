@@ -62,6 +62,33 @@ public final class ApiMappers {
         return new VaultResponse(item.getId(), item.getTitle(), item.getContent(), item.getEntryType(), item.getTags(), item.isFavorite(), item.getCreatedAt(), item.getUpdatedAt());
     }
 
+    public static DecisionThreadResponse toDecisionThreadResponse(DecisionThread thread) {
+        return new DecisionThreadResponse(
+                thread.getId(),
+                thread.getTitle(),
+                thread.getSummary(),
+                thread.getProviderKey(),
+                thread.getProviderModel(),
+                thread.getStatus(),
+                thread.getMemoGeneratedAt(),
+                thread.getLastActiveAt(),
+                thread.getCreatedAt(),
+                thread.getUpdatedAt()
+        );
+    }
+
+    public static DecisionMessageResponse toDecisionMessageResponse(DecisionMessage message) {
+        return new DecisionMessageResponse(
+                message.getId(),
+                message.getThread() == null ? null : message.getThread().getId(),
+                message.getRole(),
+                message.getTabKey(),
+                message.getContent(),
+                message.getModel(),
+                message.getCreatedAt()
+        );
+    }
+
     public static MindVaultSubjectResponse toMindVaultSubjectResponse(MindVaultSubject subject, List<MindVaultLearningItem> allItems, List<MindVaultLearningItem> queue) {
         List<MindVaultLearningItem> subjectItems = allItems.stream()
                 .filter(item -> item.getSubject() != null && Objects.equals(item.getSubject().getId(), subject.getId()))
