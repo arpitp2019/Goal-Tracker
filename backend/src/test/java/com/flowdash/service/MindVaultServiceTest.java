@@ -23,6 +23,7 @@ import org.springframework.security.access.AccessDeniedException;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,11 +57,12 @@ class MindVaultServiceTest {
     @Test
     void queueIncludesRandomAndOverdueItemsButSkipsMasteredTopics() {
         when(currentUserService.requireCurrentUserId()).thenReturn(1L);
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
         when(itemRepository.findAllByUserIdOrderByUpdatedAtDesc(1L)).thenReturn(List.of(
-                item(1L, null, null, MindVaultItemStatus.ACTIVE, MindVaultItemSource.RANDOM, LocalDate.now().minusDays(1), 5, 15),
-                item(2L, null, null, MindVaultItemStatus.ACTIVE, MindVaultItemSource.PLANNED, LocalDate.now(), 3, 25),
-                item(3L, null, null, MindVaultItemStatus.MASTERED, MindVaultItemSource.PLANNED, LocalDate.now(), 4, 90),
-                item(4L, null, null, MindVaultItemStatus.ACTIVE, MindVaultItemSource.PLANNED, LocalDate.now().plusDays(2), 1, 50)
+                item(1L, null, null, MindVaultItemStatus.ACTIVE, MindVaultItemSource.RANDOM, today.minusDays(1), 5, 15),
+                item(2L, null, null, MindVaultItemStatus.ACTIVE, MindVaultItemSource.PLANNED, today, 3, 25),
+                item(3L, null, null, MindVaultItemStatus.MASTERED, MindVaultItemSource.PLANNED, today, 4, 90),
+                item(4L, null, null, MindVaultItemStatus.ACTIVE, MindVaultItemSource.PLANNED, today.plusDays(2), 1, 50)
         ));
 
         List<MindVaultLearningItem> queue = service.queue();

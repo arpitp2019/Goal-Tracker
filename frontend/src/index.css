@@ -453,6 +453,29 @@ button {
   justify-content: flex-end;
 }
 
+.mindvault-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mindvault-subnav-link {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #d7def6;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.mindvault-subnav-link.active {
+  background: rgba(96, 121, 255, 0.16);
+  border-color: rgba(135, 151, 255, 0.28);
+  color: #ffffff;
+}
+
 .goal-tabs {
   margin-top: -4px;
 }

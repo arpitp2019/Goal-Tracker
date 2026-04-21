@@ -16,7 +16,7 @@ import {
   streamDecisionChat
 } from './api';
 import GoalTrackerPage from './GoalTrackerPage';
-import MindVaultPage from './MindVaultPage';
+import MindVaultPage from './MindVaultWorkspace';
 
 const navItems = [
   { path: '/', label: 'Home', icon: '◌' },
@@ -91,7 +91,8 @@ function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/habits/*" element={<GoalTrackerPage />} />
           <Route path="/goals/*" element={<Navigate to="/habits/checklist" replace />} />
-          <Route path="/vault" element={<MindVaultPage />} />
+          <Route path="/vault" element={<Navigate to="/vault/overview" replace />} />
+          <Route path="/vault/*" element={<MindVaultPage />} />
           <Route path="/decision" element={<DecisionCoachPage />} />
         </Route>
       </Routes>
