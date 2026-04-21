@@ -46,10 +46,10 @@ jobs:
         run: npm run build
 
       - name: Backend tests
-        run: ./backend/mvnw -f backend/pom.xml test
+        run: bash ./backend/mvnw -f backend/pom.xml test
 
       - name: Backend package
-        run: ./backend/mvnw -f backend/pom.xml -DskipTests package
+        run: bash ./backend/mvnw -f backend/pom.xml -DskipTests package
 
       - name: MindVault smoke test
         working-directory: frontend
