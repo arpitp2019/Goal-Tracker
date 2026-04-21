@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   apiCheckInHabit,
   apiClearHabitCheckIn,
@@ -201,7 +201,7 @@ function HabitTrackerPage() {
     setRefreshKey((current) => current + 1);
   };
 
-  const toggleCheckin = async (habit, checked) => {
+  const toggleCheckin = async (habit, checked, valueOverride = null) => {
     if (!editableToday) {
       return;
     }
@@ -217,7 +217,7 @@ function HabitTrackerPage() {
       return;
     }
 
-    const rawValue = checkinValues[habit.id];
+    const rawValue = valueOverride ?? checkinValues[habit.id];
     const numericValue = rawValue === '' || rawValue == null ? null : Number(rawValue);
     const status = inferCheckinStatus(habit, numericValue);
     const optimisticCheckin = {
@@ -402,6 +402,7 @@ function HabitTrackerPage() {
 }
 
 function HabitChecklistRow({ habit, editable, value, onValueChange, onToggle, onEdit }) {
+  const measuredValueRef = useRef(null);
   const completed = Boolean(habit.todayCheckin?.successful);
   const partial = habit.todayCheckin != null && !habit.todayCheckin.successful && habit.todayCheckin.status === 'PARTIAL';
   const measured = habit.habitType === 'NUMERIC' || habit.habitType === 'TIMER';
@@ -418,7 +419,7 @@ function HabitChecklistRow({ habit, editable, value, onValueChange, onToggle, on
         checked={completed}
         disabled={!editable}
         aria-label={`Complete ${habit.title}`}
-        onChange={(event) => onToggle(habit, event.target.checked)}
+        onChange={(event) => onToggle(habit, event.target.checked, measured ? measuredValueRef.current?.value ?? value : value)}
       />
       <div className="habit-row-color" aria-hidden="true" style={{ background: habit.color }} />
       <div className="habit-row-copy">
@@ -436,6 +437,7 @@ function HabitChecklistRow({ habit, editable, value, onValueChange, onToggle, on
       {measured ? (
         <input
           className="input habit-mini-input"
+          ref={measuredValueRef}
           type="number"
           step="0.1"
           aria-label={`${habit.title} value`}
