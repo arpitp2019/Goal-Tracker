@@ -97,6 +97,14 @@ function MindVaultPage() {
     try {
       const data = await apiMindVaultOverview();
       setOverview(data);
+      setSelectedQueueId((current) => {
+        const queue = data?.queue || [];
+        if (!queue.length) {
+          return null;
+        }
+        return queue.some((item) => item.id === current) ? current : queue[0].id;
+      });
+      setShowAnswer(false);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -105,18 +113,35 @@ function MindVaultPage() {
   }, []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
 
-useEffect(() => {
-    const queue = overview?.queue ?? [];
-    setShowAnswer(false);
-    setSelectedQueueId((current) =>
-      queue.length === 0
-        ? null
-        : queue.some((item) => item.id === current) ? current : queue[0].id
-    );
-  }, [overview]);
+    (async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await apiMindVaultOverview();
+        if (cancelled) return;
+        setOverview(data);
+        setSelectedQueueId((current) => {
+          const queue = data?.queue || [];
+          if (!queue.length) {
+            return null;
+          }
+          return queue.some((item) => item.id === current) ? current : queue[0].id;
+        });
+        setShowAnswer(false);
+      } catch (err) {
+        if (cancelled) return;
+        setError(err.message);
+      }
+      if (cancelled) return;
+      setLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const subjects = overview?.subjects || [];
   const sprints = overview?.sprints || [];
