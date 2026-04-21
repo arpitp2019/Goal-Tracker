@@ -4,7 +4,6 @@ import com.flowdash.domain.AppUser;
 import com.flowdash.domain.DecisionMessage;
 import com.flowdash.domain.DecisionThread;
 import com.flowdash.domain.GoalItem;
-import com.flowdash.domain.HabitItem;
 import com.flowdash.domain.MindVaultItemSource;
 import com.flowdash.domain.MindVaultItemStatus;
 import com.flowdash.domain.MindVaultLearningItem;
@@ -16,7 +15,6 @@ import com.flowdash.domain.VaultEntry;
 import com.flowdash.dto.DecisionMessageResponse;
 import com.flowdash.dto.DecisionThreadResponse;
 import com.flowdash.dto.GoalResponse;
-import com.flowdash.dto.HabitResponse;
 import com.flowdash.dto.MindVaultAnalyticsResponse;
 import com.flowdash.dto.MindVaultForecastPointResponse;
 import com.flowdash.dto.MindVaultItemResponse;
@@ -52,10 +50,6 @@ public final class ApiMappers {
 
     public static GoalResponse toGoalResponse(GoalItem item) {
         return new GoalResponse(item.getId(), item.getTitle(), item.getDescription(), item.getStatus(), item.getPriority(), item.getDueDate(), item.getCreatedAt(), item.getUpdatedAt());
-    }
-
-    public static HabitResponse toHabitResponse(HabitItem item) {
-        return new HabitResponse(item.getId(), item.getTitle(), item.getCadence(), item.getTargetCount(), item.getStreak(), item.getCompletedCount(), item.getNotes(), item.isArchived(), item.getCreatedAt(), item.getUpdatedAt());
     }
 
     public static VaultResponse toVaultResponse(VaultEntry item) {

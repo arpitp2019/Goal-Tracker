@@ -76,6 +76,39 @@ export function apiDelete(resource, id) {
   return request(`${resource}/${id}`, { method: 'DELETE', headers: {} });
 }
 
+export async function apiHabitsOverview(date) {
+  const query = date ? `?date=${encodeURIComponent(date)}` : '';
+  return request(`/api/habits/overview${query}`, { method: 'GET', headers: {} });
+}
+
+export async function apiCreateHabit(payload) {
+  return request('/api/habits', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function apiUpdateHabit(id, payload) {
+  return request(`/api/habits/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export async function apiDeleteHabit(id) {
+  return request(`/api/habits/${id}`, { method: 'DELETE', headers: {} });
+}
+
+export async function apiCheckInHabit(id, payload) {
+  return request(`/api/habits/${id}/checkins`, { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function apiClearHabitCheckIn(id, date) {
+  return request(`/api/habits/${id}/checkins/${encodeURIComponent(date)}`, { method: 'DELETE', headers: {} });
+}
+
+export async function apiHabitCheckins(id, from, to) {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const query = params.toString() ? `?${params}` : '';
+  return request(`/api/habits/${id}/checkins${query}`, { method: 'GET', headers: {} });
+}
+
 export async function apiMindVaultOverview() {
   return request('/api/mindvault/overview', { method: 'GET', headers: {} });
 }

@@ -15,6 +15,7 @@ import {
   getGoogleAuthUrl,
   streamDecisionChat
 } from './api';
+import HabitTrackerPage from './HabitTrackerPage';
 import MindVaultPage from './MindVaultPage';
 
 const navItems = [
@@ -57,35 +58,6 @@ const collectionConfigs = {
       status: 'PLANNED',
       priority: 3,
       dueDate: ''
-    }
-  },
-  habits: {
-    title: 'Habits',
-    subtitle: 'Keep the cadence tight and visible.',
-    resource: '/api/habits',
-    emptyLabel: 'No habits yet.',
-    fields: [
-      { key: 'title', label: 'Title', type: 'text' },
-      {
-        key: 'cadence',
-        label: 'Cadence',
-        type: 'select',
-        options: ['DAILY', 'WEEKLY', 'CUSTOM']
-      },
-      { key: 'targetCount', label: 'Target count', type: 'number' },
-      { key: 'streak', label: 'Streak', type: 'number' },
-      { key: 'completedCount', label: 'Completed', type: 'number' },
-      { key: 'notes', label: 'Notes', type: 'textarea' },
-      { key: 'archived', label: 'Archived', type: 'checkbox' }
-    ],
-    defaults: {
-      title: '',
-      cadence: 'DAILY',
-      targetCount: 1,
-      streak: 0,
-      completedCount: 0,
-      notes: '',
-      archived: false
     }
   },
 };
@@ -147,7 +119,7 @@ function App() {
         >
           <Route path="/" element={<DashboardPage />} />
           <Route path="/goals" element={<CollectionPage config={collectionConfigs.goals} />} />
-          <Route path="/habits" element={<CollectionPage config={collectionConfigs.habits} />} />
+          <Route path="/habits" element={<HabitTrackerPage />} />
           <Route path="/vault" element={<MindVaultPage />} />
           <Route path="/decision" element={<DecisionCoachPage />} />
         </Route>
