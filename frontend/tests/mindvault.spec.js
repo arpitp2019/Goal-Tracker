@@ -59,6 +59,11 @@ test('MindVault supports inbox capture, review, library, subjects, and insights 
   await expect(page.getByRole('heading', { name: "Capture today's learning" })).toBeVisible();
 
   const captureForm = page.locator('form.mindvault-form').first();
+  await captureForm.getByLabel('Resource type').selectOption('PDF');
+  await expect(captureForm.locator('input[type="file"]')).toBeVisible();
+  await expect(captureForm.getByText(/File upload UI is ready/)).toBeVisible();
+  await captureForm.getByLabel('Resource type').selectOption('TEXT');
+
   await captureForm.getByRole('textbox', { name: 'Title', exact: true }).fill('Quantum basics');
   await captureForm.getByLabel('Subject').selectOption({ label: 'Physics' });
   await captureForm.getByLabel('Sprint').selectOption({ label: 'Wave foundations' });

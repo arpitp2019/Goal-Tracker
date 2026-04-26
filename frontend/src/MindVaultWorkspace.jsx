@@ -178,6 +178,9 @@ export default function MindVaultPage() {
     setBusy(true);
     setError('');
     try {
+      if (isFileResource(resourceForm.resourceType) && resourceForm.file && overview?.stats?.fileUploadsEnabled !== true) {
+        throw new Error('File uploads need Supabase Storage env vars on Render. Text and link resources can be saved now.');
+      }
       const payload = itemPayload(itemForm);
       const saved = itemEditId ? await apiMindVaultUpdateItem(itemEditId, payload) : await apiMindVaultCreateItem(payload);
       await saveResourceIfPresent(saved.id, resourceForm);
@@ -878,11 +881,11 @@ function CaptureForm({ mindVault, submitLabel }) {
             <select className="input" value={resource.resourceType} onChange={(event) => setResource((current) => ({ ...current, resourceType: event.target.value }))}>
               <option value="TEXT">Text</option>
               <option value="LINK">Link</option>
-              <option value="PDF" disabled={!fileUploadsEnabled}>PDF</option>
-              <option value="DOCX" disabled={!fileUploadsEnabled}>Word file</option>
-              <option value="IMAGE" disabled={!fileUploadsEnabled}>Image</option>
-              <option value="NOTEBOOK_FILE" disabled={!fileUploadsEnabled}>Notebook file</option>
-              <option value="OTHER_FILE" disabled={!fileUploadsEnabled}>Other file</option>
+              <option value="PDF">PDF</option>
+              <option value="DOCX">Word file</option>
+              <option value="IMAGE">Image</option>
+              <option value="NOTEBOOK_FILE">Notebook file</option>
+              <option value="OTHER_FILE">Other file</option>
             </select>
           </label>
           <label className="field">
@@ -896,7 +899,9 @@ function CaptureForm({ mindVault, submitLabel }) {
             <input className="input" value={resource.url} onChange={(event) => setResource((current) => ({ ...current, url: event.target.value }))} placeholder="https://..." />
           </label>
         ) : null}
-        {!fileUploadsEnabled ? <p className="muted">File uploads are disabled until Supabase Storage env vars are configured. Text and links still work.</p> : null}
+        {!fileUploadsEnabled && isFileResource(resource.resourceType) ? (
+          <p className="muted">File upload UI is ready, but saving files needs Supabase Storage env vars on Render. Text and links still save without Supabase.</p>
+        ) : null}
         {isFileResource(resource.resourceType) ? (
           <label className="field">
             <span>File</span>
