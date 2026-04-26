@@ -22,6 +22,10 @@ test('MindVault supports inbox capture, review, library, subjects, and insights 
   await expect(page.getByRole('link', { name: 'Review' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Due queue' })).toBeVisible();
 
+  await page.goto('/vault/');
+  await expect(page).toHaveURL(/\/vault\/review$/);
+  await expect(page.getByRole('heading', { name: 'Due queue' })).toBeVisible();
+
   await page.goto('/vault/subjects');
   await expect(page).toHaveURL(/\/vault\/subjects$/);
   await expect(page.getByRole('heading', { name: 'Structured learning map' })).toBeVisible();

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { NavLink, Navigate, useLocation } from 'react-router-dom';
 import {
   apiMindVaultCreateItem,
   apiMindVaultCreateResource,
@@ -81,6 +81,7 @@ const libraryFilters = [
 ];
 
 export default function MindVaultPage() {
+  const location = useLocation();
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -363,6 +364,9 @@ export default function MindVaultPage() {
     }
   };
 
+  const section = location.pathname.split('/').filter(Boolean).at(-1);
+  const activeSection = ['inbox', 'review', 'library', 'subjects', 'insights'].includes(section) ? section : '';
+
   const context = {
     subjects,
     sprints,
@@ -429,24 +433,22 @@ export default function MindVaultPage() {
       </div>
 
       <nav className="mindvault-subnav" aria-label="MindVault sections">
-        <NavLink to="inbox" className={({ isActive }) => `mindvault-subnav-link${isActive ? ' active' : ''}`}>Inbox</NavLink>
-        <NavLink to="review" className={({ isActive }) => `mindvault-subnav-link${isActive ? ' active' : ''}`}>Review</NavLink>
-        <NavLink to="library" className={({ isActive }) => `mindvault-subnav-link${isActive ? ' active' : ''}`}>Library</NavLink>
-        <NavLink to="subjects" className={({ isActive }) => `mindvault-subnav-link${isActive ? ' active' : ''}`}>Subjects</NavLink>
-        <NavLink to="insights" className={({ isActive }) => `mindvault-subnav-link${isActive ? ' active' : ''}`}>Insights</NavLink>
+        <NavLink to="/vault/inbox" className={({ isActive }) => `mindvault-subnav-link${isActive ? ' active' : ''}`}>Inbox</NavLink>
+        <NavLink to="/vault/review" className={({ isActive }) => `mindvault-subnav-link${isActive ? ' active' : ''}`}>Review</NavLink>
+        <NavLink to="/vault/library" className={({ isActive }) => `mindvault-subnav-link${isActive ? ' active' : ''}`}>Library</NavLink>
+        <NavLink to="/vault/subjects" className={({ isActive }) => `mindvault-subnav-link${isActive ? ' active' : ''}`}>Subjects</NavLink>
+        <NavLink to="/vault/insights" className={({ isActive }) => `mindvault-subnav-link${isActive ? ' active' : ''}`}>Insights</NavLink>
       </nav>
 
       {error ? <div className="notice error">{error}</div> : null}
       {loading ? <div className="notice">Loading MindVault...</div> : null}
 
-      <Routes>
-        <Route index element={<Navigate to="review" replace />} />
-        <Route path="inbox" element={<InboxPage mindVault={context} />} />
-        <Route path="review" element={<ReviewPage mindVault={context} />} />
-        <Route path="library" element={<LibraryPage mindVault={context} />} />
-        <Route path="subjects" element={<SubjectsPage mindVault={context} />} />
-        <Route path="insights" element={<InsightsPage mindVault={context} />} />
-      </Routes>
+      {activeSection === '' ? <Navigate to="/vault/review" replace /> : null}
+      {activeSection === 'inbox' ? <InboxPage mindVault={context} /> : null}
+      {activeSection === 'review' ? <ReviewPage mindVault={context} /> : null}
+      {activeSection === 'library' ? <LibraryPage mindVault={context} /> : null}
+      {activeSection === 'subjects' ? <SubjectsPage mindVault={context} /> : null}
+      {activeSection === 'insights' ? <InsightsPage mindVault={context} /> : null}
     </section>
   );
 }
