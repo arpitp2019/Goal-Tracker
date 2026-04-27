@@ -24,6 +24,7 @@ import com.flowdash.repository.MindVaultSprintRepository;
 import com.flowdash.repository.MindVaultSubjectRepository;
 import com.flowdash.security.CurrentUserService;
 import com.flowdash.service.exception.DuplicateResourceException;
+import com.flowdash.service.exception.ResourceNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -350,6 +351,21 @@ public class MindVaultService {
         resourceRepository.delete(resource);
     }
 
+    public StoredMindVaultResourceContent loadResourceContent(Long id) {
+        MindVaultResource resource = requireOwnedResource(id);
+        if (resource.getStoragePath() == null || resource.getStoragePath().isBlank()) {
+            throw new ResourceNotFoundException("Uploaded file not found");
+        }
+        SupabaseStorageService.StoredContent content = supabaseStorageService.download(resource.getStoragePath());
+        String mimeType = resource.getMimeType() == null || resource.getMimeType().isBlank()
+                ? content.mimeType()
+                : resource.getMimeType();
+        String fileName = resource.getOriginalFileName() == null || resource.getOriginalFileName().isBlank()
+                ? resource.getTitle()
+                : resource.getOriginalFileName();
+        return new StoredMindVaultResourceContent(resource, content.bytes(), mimeType, fileName);
+    }
+
     public MindVaultSnapshot snapshot() {
         Long userId = currentUserService.requireCurrentUserId();
         return new MindVaultSnapshot(
@@ -357,7 +373,7 @@ public class MindVaultService {
                 sprintRepository.findAllByUserIdOrderByUpdatedAtDesc(userId),
                 itemRepository.findAllByUserIdOrderByUpdatedAtDesc(userId),
                 reviewLogRepository.findAllByUserIdOrderByCreatedAtDesc(userId),
-                supabaseStorageService.isConfigured()
+                supabaseStorageService.isUploadEnabled()
         );
     }
 
@@ -461,7 +477,7 @@ public class MindVaultService {
     private MindVaultResource requireOwnedResource(Long id) {
         Long userId = currentUserService.requireCurrentUserId();
         return resourceRepository.findByIdAndUserId(id, userId)
-                .orElseThrow(() -> new IllegalArgumentException("Resource not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
     }
 
     private MindVaultSubject resolveSubject(Long id) {
@@ -566,6 +582,14 @@ public class MindVaultService {
             List<MindVaultLearningItem> items,
             List<MindVaultReviewLog> reviews,
             boolean fileUploadsEnabled
+    ) {
+    }
+
+    public record StoredMindVaultResourceContent(
+            MindVaultResource resource,
+            byte[] bytes,
+            String mimeType,
+            String fileName
     ) {
     }
 }

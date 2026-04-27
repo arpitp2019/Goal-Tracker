@@ -207,6 +207,7 @@ public final class ApiMappers {
                 resource.getMimeType(),
                 resource.getSizeBytes(),
                 resource.getOriginalFileName(),
+                resource.getStoragePath() == null || resource.getStoragePath().isBlank() ? null : "/api/mindvault/resources/%d/content".formatted(resource.getId()),
                 resource.getCreatedAt(),
                 resource.getUpdatedAt()
         );

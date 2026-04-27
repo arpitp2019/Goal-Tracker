@@ -17,6 +17,7 @@ import com.flowdash.repository.MindVaultReviewLogRepository;
 import com.flowdash.repository.MindVaultSprintRepository;
 import com.flowdash.repository.MindVaultSubjectRepository;
 import com.flowdash.security.CurrentUserService;
+import com.flowdash.service.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -211,6 +212,47 @@ class MindVaultServiceTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Supabase upload failed");
         verify(resourceRepository, never()).save(any());
+    }
+
+    @Test
+    void loadResourceContentReturnsOwnedFileBytes() {
+        AppUser user = user(1L);
+        MindVaultLearningItem item = item(24L, null, null, MindVaultItemStatus.ACTIVE, MindVaultItemSource.PLANNED, LocalDate.now(), 3, 20);
+        MindVaultResource resource = new MindVaultResource(
+                user,
+                item,
+                MindVaultResourceType.PDF,
+                "Wave handout",
+                null,
+                null,
+                "mindvault/1/24/waves.pdf",
+                "application/pdf",
+                512L,
+                "waves.pdf"
+        );
+        resource.setId(33L);
+
+        when(currentUserService.requireCurrentUserId()).thenReturn(1L);
+        when(resourceRepository.findByIdAndUserId(33L, 1L)).thenReturn(Optional.of(resource));
+        when(supabaseStorageService.download("mindvault/1/24/waves.pdf"))
+                .thenReturn(new SupabaseStorageService.StoredContent("pdf-body".getBytes(), "application/pdf"));
+
+        MindVaultService.StoredMindVaultResourceContent content = service.loadResourceContent(33L);
+
+        assertThat(content.resource()).isEqualTo(resource);
+        assertThat(content.fileName()).isEqualTo("waves.pdf");
+        assertThat(content.mimeType()).isEqualTo("application/pdf");
+        assertThat(new String(content.bytes())).isEqualTo("pdf-body");
+    }
+
+    @Test
+    void loadResourceContentRejectsUnknownResource() {
+        when(currentUserService.requireCurrentUserId()).thenReturn(1L);
+        when(resourceRepository.findByIdAndUserId(77L, 1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.loadResourceContent(77L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Resource not found");
     }
 
     private static MindVaultLearningItem item(Long id, MindVaultSubject subject, MindVaultSprint sprint, MindVaultItemStatus status, MindVaultItemSource source, LocalDate dueDate, int priority, int mastery) {

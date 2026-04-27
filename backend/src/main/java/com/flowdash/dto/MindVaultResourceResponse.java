@@ -15,6 +15,7 @@ public record MindVaultResourceResponse(
         String mimeType,
         Long sizeBytes,
         String originalFileName,
+        String contentUrl,
         Instant createdAt,
         Instant updatedAt
 ) {

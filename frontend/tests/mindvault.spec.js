@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
+import { fileURLToPath } from 'node:url';
 
 const email = `mindvault-${Date.now()}-${Math.random().toString(36).slice(2)}@example.com`;
+const samplePdf = fileURLToPath(new URL('./fixtures/study-note.pdf', import.meta.url));
 
 test('MindVault supports inbox capture, review, library, subjects, and insights pages', async ({ page }) => {
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
@@ -61,8 +63,6 @@ test('MindVault supports inbox capture, review, library, subjects, and insights 
   const captureForm = page.locator('form.mindvault-form').first();
   await captureForm.getByLabel('Resource type').selectOption('PDF');
   await expect(captureForm.locator('input[type="file"]')).toBeVisible();
-  await expect(captureForm.getByText(/File upload UI is ready/)).toBeVisible();
-  await captureForm.getByLabel('Resource type').selectOption('TEXT');
 
   await captureForm.getByRole('textbox', { name: 'Title', exact: true }).fill('Quantum basics');
   await captureForm.getByLabel('Subject').selectOption({ label: 'Physics' });
@@ -74,13 +74,23 @@ test('MindVault supports inbox capture, review, library, subjects, and insights 
   await captureForm.getByRole('textbox', { name: 'Source', exact: true }).fill('Class notes');
   await captureForm.getByRole('textbox', { name: 'Tags', exact: true }).fill('quantum, waves');
   await captureForm.getByLabel('Review due date').fill(today());
-  await captureForm.getByRole('textbox', { name: 'Resource title', exact: true }).fill('Wave-particle note');
-  await captureForm.getByLabel('Text / description').fill('Short text resource kept in Postgres metadata.');
+  await captureForm.getByRole('textbox', { name: 'Resource title', exact: true }).fill('Wave-particle handout');
+  await captureForm.getByLabel('File').setInputFiles(samplePdf);
   await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/mindvault/items') && response.request().method() === 'POST'),
     captureForm.getByRole('button', { name: 'Save learning' }).click()
   ]);
-  await expect(page.locator('.learning-card').filter({ hasText: 'Quantum basics' }).first()).toBeVisible();
+  const quantumCard = page.locator('.learning-card').filter({ hasText: 'Quantum basics' }).first();
+  await expect(quantumCard).toBeVisible();
+  await quantumCard.locator('summary').click();
+  const openFileLink = quantumCard.getByRole('link', { name: 'Open file' });
+  await expect(openFileLink).toBeVisible();
+
+  const fileHref = await openFileLink.getAttribute('href');
+  expect(fileHref).toBeTruthy();
+  const fileResponse = await page.request.get(fileHref);
+  expect(fileResponse.ok()).toBeTruthy();
+  expect(fileResponse.headers()['content-type']).toContain('application/pdf');
 
   await captureForm.getByRole('button', { name: 'Random learning' }).click();
   await captureForm.getByRole('textbox', { name: 'Title', exact: true }).fill('Chrome shortcut');

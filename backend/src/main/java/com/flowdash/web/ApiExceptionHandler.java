@@ -1,6 +1,9 @@
 package com.flowdash.web;
 
 import com.flowdash.service.exception.DuplicateResourceException;
+import com.flowdash.service.exception.ResourceNotFoundException;
+import com.flowdash.service.exception.StorageOperationException;
+import com.flowdash.service.exception.StorageUnavailableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -31,6 +34,21 @@ public class ApiExceptionHandler {
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<?> handleConflict(RuntimeException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<?> handleNotFound(RuntimeException exception) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(StorageUnavailableException.class)
+    public ResponseEntity<?> handleStorageUnavailable(RuntimeException exception) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("message", exception.getMessage()));
+    }
+
+    @ExceptionHandler(StorageOperationException.class)
+    public ResponseEntity<?> handleStorageOperation(RuntimeException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of("message", exception.getMessage()));
     }
 
     @ExceptionHandler(AuthenticationException.class)

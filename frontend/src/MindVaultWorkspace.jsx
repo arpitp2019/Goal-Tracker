@@ -179,7 +179,7 @@ export default function MindVaultPage() {
     setError('');
     try {
       if (isFileResource(resourceForm.resourceType) && resourceForm.file && overview?.stats?.fileUploadsEnabled !== true) {
-        throw new Error('File uploads need Supabase Storage env vars on Render. Text and link resources can be saved now.');
+        throw new Error('File uploads are not enabled in this environment yet. Text and link resources can still be saved.');
       }
       const payload = itemPayload(itemForm);
       const saved = itemEditId ? await apiMindVaultUpdateItem(itemEditId, payload) : await apiMindVaultCreateItem(payload);
@@ -900,7 +900,7 @@ function CaptureForm({ mindVault, submitLabel }) {
           </label>
         ) : null}
         {!fileUploadsEnabled && isFileResource(resource.resourceType) ? (
-          <p className="muted">File upload UI is ready, but saving files needs Supabase Storage env vars on Render. Text and links still save without Supabase.</p>
+          <p className="muted">File upload UI is ready, but this environment does not have backend file storage enabled yet. Text and links still save normally.</p>
         ) : null}
         {isFileResource(resource.resourceType) ? (
           <label className="field">
@@ -960,6 +960,7 @@ function ResourceList({ resources, onDelete, readonly = false }) {
               <strong>{resource.title}</strong>
               <p>{resource.resourceType} {resource.originalFileName ? `- ${resource.originalFileName}` : ''}</p>
               {resource.url ? <a className="text-button" href={resource.url} target="_blank" rel="noreferrer">Open link</a> : null}
+              {resource.contentUrl ? <a className="text-button" href={resource.contentUrl} target="_blank" rel="noreferrer">Open file</a> : null}
               {resource.description ? <p>{resource.description}</p> : null}
             </div>
             {!readonly && onDelete ? <button className="text-button danger" type="button" onClick={() => onDelete(resource)}>Delete</button> : null}

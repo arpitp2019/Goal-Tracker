@@ -48,6 +48,7 @@ flowdash:
     url: ${SUPABASE_URL:}
     service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
     storage-bucket: ${SUPABASE_STORAGE_BUCKET:}
+    local-fallback-enabled: true
   ai:
     provider: ${FLOWDASH_AI_PROVIDER:mock}
     model: ${FLOWDASH_AI_MODEL:flowdash-mock}
