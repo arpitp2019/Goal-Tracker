@@ -138,6 +138,105 @@ export async function apiHabitCheckins(id, from, to) {
   return request(`/api/habits/${id}/checkins${query}`, { method: 'GET', headers: {} });
 }
 
+export async function apiSmaartDashboard() {
+  return request('/api/smaart-goals/dashboard', { method: 'GET', headers: {} });
+}
+
+export async function apiSmaartPriorities() {
+  return request('/api/smaart-goals/priorities', { method: 'GET', headers: {} });
+}
+
+export async function apiSmaartUpdatePriorityProfile(payload) {
+  return request('/api/smaart-goals/priorities/preferences', { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export async function apiSmaartGoals(filters = {}) {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== null && value !== '') {
+      params.set(key, value);
+    }
+  }
+  const query = params.toString() ? `?${params}` : '';
+  return request(`/api/smaart-goals${query}`, { method: 'GET', headers: {} });
+}
+
+export async function apiSmaartCreateGoal(payload) {
+  return request('/api/smaart-goals', { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function apiSmaartGoalDetail(id) {
+  return request(`/api/smaart-goals/${id}`, { method: 'GET', headers: {} });
+}
+
+export async function apiSmaartUpdateGoal(id, payload) {
+  return request(`/api/smaart-goals/${id}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export async function apiSmaartDeleteGoal(id) {
+  return request(`/api/smaart-goals/${id}`, { method: 'DELETE', headers: {} });
+}
+
+export async function apiSmaartArchiveGoal(id) {
+  return request(`/api/smaart-goals/${id}/archive`, { method: 'POST', headers: {} });
+}
+
+export async function apiSmaartRestoreGoal(id) {
+  return request(`/api/smaart-goals/${id}/restore`, { method: 'POST', headers: {} });
+}
+
+export async function apiSmaartCreateSprint(goalId, payload) {
+  return request(`/api/smaart-goals/${goalId}/sprints`, { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function apiSmaartUpdateSprint(goalId, sprintId, payload) {
+  return request(`/api/smaart-goals/${goalId}/sprints/${sprintId}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export async function apiSmaartDeleteSprint(goalId, sprintId) {
+  return request(`/api/smaart-goals/${goalId}/sprints/${sprintId}`, { method: 'DELETE', headers: {} });
+}
+
+export async function apiSmaartCreateTask(goalId, payload) {
+  return request(`/api/smaart-goals/${goalId}/tasks`, { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function apiSmaartCreateSprintTask(goalId, sprintId, payload) {
+  return request(`/api/smaart-goals/${goalId}/sprints/${sprintId}/tasks`, { method: 'POST', body: JSON.stringify(payload) });
+}
+
+export async function apiSmaartUpdateTask(taskId, payload) {
+  return request(`/api/smaart-tasks/${taskId}`, { method: 'PUT', body: JSON.stringify(payload) });
+}
+
+export async function apiSmaartDuplicateTask(taskId) {
+  return request(`/api/smaart-tasks/${taskId}/duplicate`, { method: 'POST', headers: {} });
+}
+
+export async function apiSmaartUpdateTaskStatus(taskId, status) {
+  return request(`/api/smaart-tasks/${taskId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+}
+
+export async function apiSmaartDeleteTask(taskId) {
+  return request(`/api/smaart-tasks/${taskId}`, { method: 'DELETE', headers: {} });
+}
+
+export async function apiSmaartKanban() {
+  return request('/api/smaart-goals/kanban', { method: 'GET', headers: {} });
+}
+
+export async function apiSmaartCalendar(from, to) {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  const query = params.toString() ? `?${params}` : '';
+  return request(`/api/smaart-goals/calendar${query}`, { method: 'GET', headers: {} });
+}
+
+export async function apiSmaartArchive() {
+  return request('/api/smaart-goals/archive', { method: 'GET', headers: {} });
+}
+
 export async function apiMindVaultOverview() {
   return request('/api/mindvault/overview', { method: 'GET', headers: {} });
 }

@@ -17,10 +17,12 @@ import {
 } from './api';
 import GoalTrackerPage from './GoalTrackerPage';
 import MindVaultPage from './MindVaultWorkspace';
+import SmaartGoalsWorkspace from './SmaartGoalsWorkspace';
 
 const navItems = [
   { path: '/', label: 'Home', icon: '◌' },
   { path: '/habits', label: 'Habits', icon: 'H' },
+  { path: '/goals', label: 'Goals', icon: 'G' },
   { path: '/vault', label: 'MindVault', icon: '▣' },
   { path: '/decision', label: 'Decision Coach', icon: '✦' }
 ];
@@ -45,6 +47,14 @@ function App() {
   const [user, setUser] = useState(undefined);
   const [bootError, setBootError] = useState('');
   const routerBasename = normalizeRouterBasename(import.meta.env.BASE_URL);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const theme = window.localStorage.getItem('flowdash_theme') || 'dark';
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.style.colorScheme = theme;
+    }
+  }, []);
 
   useEffect(() => {
     apiGetMe()
@@ -90,7 +100,7 @@ function App() {
         >
           <Route path="/" element={<DashboardPage />} />
           <Route path="/habits/*" element={<GoalTrackerPage />} />
-          <Route path="/goals/*" element={<Navigate to="/habits/checklist" replace />} />
+          <Route path="/goals/*" element={<SmaartGoalsWorkspace />} />
           <Route path="/vault" element={<Navigate to="/vault/review" replace />} />
           <Route path="/vault/*" element={<MindVaultPage />} />
           <Route path="/decision" element={<DecisionCoachPage />} />
@@ -150,7 +160,8 @@ function DashboardPage() {
   const cards = useMemo(
     () => [
       { title: 'Habits', path: '/habits', description: 'Keep steady progress visible and measurable.' },
-    { title: 'MindVault', path: '/vault', description: 'Capture learning and revise it through spaced repetition.' },
+      { title: 'Goals', path: '/goals', description: 'Plan SMAART goals, sprints, tasks, deadlines, and Kanban flow.' },
+      { title: 'MindVault', path: '/vault', description: 'Capture learning and revise it through spaced repetition.' },
       { title: 'Decision Coach', path: '/decision', description: 'Think in frameworks and get a final recommendation.' }
     ],
     []

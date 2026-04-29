@@ -59,6 +59,10 @@ jobs:
         working-directory: frontend
         run: npm run smoke:habits
 
+      - name: Goals smoke test
+        working-directory: frontend
+        run: npm run smoke:goals
+
       - name: Publish required status check
         if: ${{ success() && github.event_name != 'pull_request' }}
         uses: actions/github-script@v7

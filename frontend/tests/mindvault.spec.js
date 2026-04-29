@@ -75,11 +75,13 @@ test('MindVault supports inbox capture, review, library, subjects, and insights 
   await captureForm.getByRole('textbox', { name: 'Tags', exact: true }).fill('quantum, waves');
   await captureForm.getByLabel('Review due date').fill(today());
   await captureForm.getByRole('textbox', { name: 'Resource title', exact: true }).fill('Wave-particle handout');
-  await captureForm.getByLabel('File').setInputFiles(samplePdf);
+  await captureForm.locator('input[type="file"]').setInputFiles(samplePdf);
   await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/mindvault/items') && response.request().method() === 'POST'),
     captureForm.getByRole('button', { name: 'Save learning' }).click()
   ]);
+  await page.goto('/vault/library');
+  await page.getByPlaceholder('Search title, prompt, answer, notes, tags').fill('Quantum');
   const quantumCard = page.locator('.learning-card').filter({ hasText: 'Quantum basics' }).first();
   await expect(quantumCard).toBeVisible();
   await quantumCard.locator('summary').click();
@@ -92,16 +94,18 @@ test('MindVault supports inbox capture, review, library, subjects, and insights 
   expect(fileResponse.ok()).toBeTruthy();
   expect(fileResponse.headers()['content-type']).toContain('application/pdf');
 
-  await captureForm.getByRole('button', { name: 'Random learning' }).click();
-  await captureForm.getByRole('textbox', { name: 'Title', exact: true }).fill('Chrome shortcut');
-  await captureForm.getByLabel('Recall prompt').fill('What shortcut reopens a closed browser tab?');
-  await captureForm.getByLabel('Answer').fill('Ctrl + Shift + T reopens the last closed tab.');
-  await captureForm.getByLabel('Resource type').selectOption('LINK');
-  await captureForm.getByRole('textbox', { name: 'Resource title', exact: true }).fill('Keyboard shortcuts');
-  await captureForm.getByLabel('URL').fill('https://support.google.com/chrome/answer/157179');
+  await page.goto('/vault/inbox');
+  const randomForm = page.locator('form.mindvault-form').first();
+  await randomForm.getByRole('button', { name: 'Random learning' }).click();
+  await randomForm.getByRole('textbox', { name: 'Title', exact: true }).fill('Chrome shortcut');
+  await randomForm.getByLabel('Recall prompt').fill('What shortcut reopens a closed browser tab?');
+  await randomForm.getByLabel('Answer').fill('Ctrl + Shift + T reopens the last closed tab.');
+  await randomForm.getByLabel('Resource type').selectOption('LINK');
+  await randomForm.getByRole('textbox', { name: 'Resource title', exact: true }).fill('Keyboard shortcuts');
+  await randomForm.getByLabel('URL').fill('https://support.google.com/chrome/answer/157179');
   await Promise.all([
     page.waitForResponse((response) => response.url().includes('/api/mindvault/items') && response.request().method() === 'POST'),
-    captureForm.getByRole('button', { name: 'Save learning' }).click()
+    randomForm.getByRole('button', { name: 'Save learning' }).click()
   ]);
   await expect(page.locator('.learning-card').filter({ hasText: 'Chrome shortcut' }).first()).toBeVisible();
 

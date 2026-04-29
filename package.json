@@ -11,9 +11,11 @@
     "frontend:smoke:pages": "npm --prefix frontend run smoke:pages",
     "frontend:smoke:mindvault": "npm --prefix frontend run smoke:mindvault",
     "frontend:smoke:habits": "npm --prefix frontend run smoke:habits",
+    "frontend:smoke:goals": "npm --prefix frontend run smoke:goals",
     "build:render": "npm --prefix frontend run build && backend\\mvnw.cmd -f backend/pom.xml -DskipTests package",
     "smoke:mindvault": "npm run build:render && npm --prefix frontend run smoke:mindvault",
     "smoke:habits": "npm run build:render && npm --prefix frontend run smoke:habits",
+    "smoke:goals": "npm run build:render && npm --prefix frontend run smoke:goals",
     "backend:run": "backend\\mvnw.cmd -f backend/pom.xml spring-boot:run",
     "backend:test": "backend\\mvnw.cmd -f backend/pom.xml test",
     "backend:build": "backend\\mvnw.cmd -f backend/pom.xml -DskipTests package"
